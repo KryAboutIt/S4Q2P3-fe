@@ -15,14 +15,14 @@
       <form class="space-y-6">
         <div class="space-y-1">
           <label
-            for="username"
+            for="email"
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >Username</label
+            >Email</label
           >
           <input
-            id="username"
-            type="text"
-            placeholder="Enter your username"
+            id="email"
+            type="email"
+            placeholder="Enter your email"
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             autofocus
           />
@@ -42,16 +42,73 @@
           />
         </div>
 
-        <div class="flex items-center justify-between">
+        <div class="space-y-2">
           <label
-            class="flex items-center text-sm text-gray-600 dark:text-gray-400"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            <input
-              type="checkbox"
-              class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 dark:border-gray-600 rounded mr-2"
-            />
-            Remember me
+            Account type
           </label>
+          <div
+            class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700"
+          >
+            <button
+              type="button"
+              @click="isManager = 0"
+              :class="[
+                'flex-1 px-4 py-2 text-sm font-medium transition-colors duration-200 ease-in-out',
+                isManager === 0
+                  ? 'bg-primary dark:bg-dark-primary text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
+              ]"
+            >
+              Cashier
+            </button>
+            <button
+              type="button"
+              @click="isManager = 1"
+              :class="[
+                'flex-1 px-4 py-2 text-sm font-medium transition-colors duration-200 ease-in-out',
+                isManager === 1
+                  ? 'bg-primary dark:bg-dark-primary text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
+              ]"
+            >
+              Manager
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <label class="flex items-center">
+            <div class="relative flex items-center">
+              <input type="checkbox" class="sr-only peer" />
+              <div
+                class="w-5 h-5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 peer-checked:bg-primary dark:peer-checked:bg-dark-primary peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary dark:peer-focus:ring-dark-primary peer-focus:border-transparent dark:peer-focus:border-transparent transition-colors duration-200"
+              ></div>
+
+              <div
+                class="absolute left-0.5 top-0.5 w-4 h-4 text-white transform scale-0 peer-checked:scale-100 transition duration-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="3"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
+            <span class="ml-2 text-sm text-gray-600 dark:text-gray-400"
+              >Remember me</span
+            >
+          </label>
+
           <a
             href="#"
             class="text-sm text-primary hover:text-primary-hover dark:text-dark-primary dark:hover:text-dark-primary-hover hover:underline"
@@ -104,7 +161,9 @@
 </template>
 
 <script setup>
-import { onMounted, nextTick } from "vue";
+import { onMounted, ref } from "vue";
+
+const isManager = ref(0);
 
 onMounted(() => {
   if (
