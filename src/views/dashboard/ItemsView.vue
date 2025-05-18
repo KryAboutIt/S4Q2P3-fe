@@ -55,10 +55,13 @@
           class="appearance-none w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded-md py-2 px-3 text-gray-700 dark:text-white leading-tight focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary cursor-pointer"
         >
           <option value="">All Categories</option>
-          <option value="drinks">Drinks</option>
-          <option value="food">Food</option>
-          <option value="snacks">Snacks</option>
-          <option value="merchandise">Merchandise</option>
+          <option
+            v-for="category in categories"
+            :key="category.id"
+            :value="category.id"
+          >
+            {{ category.name }}
+          </option>
         </select>
         <select
           v-model="sortBy"
@@ -129,8 +132,8 @@
                     class="h-10 w-10 flex-shrink-0 rounded-md bg-gray-200 dark:bg-gray-600"
                   >
                     <img
-                      v-if="item.image"
-                      :src="item.image"
+                      v-if="item.picture"
+                      :src="`https://pos-api.buahbibir.co.id/storage/pictures/${item.picture}`"
                       alt=""
                       class="h-10 w-10 rounded-md object-cover"
                     />
@@ -168,29 +171,19 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span
-                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                  :class="{
-                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200':
-                      item.category === 'drinks',
-                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                      item.category === 'food',
-                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
-                      item.category === 'snacks',
-                    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200':
-                      item.category === 'merchandise',
-                  }"
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                 >
-                  {{ item.category }}
+                  {{ item.category?.name || "Unknown" }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-900 dark:text-white">
-                  {{ formatCurrency(item.price) }}
+                  {{ formatCurrency(item.sell_price) }}
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-900 dark:text-white">
-                  {{ item.stock }}
+                  {{ item.quantity }}
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
@@ -198,17 +191,17 @@
                   class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
                   :class="{
                     'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                      item.stock > 10,
+                      item.quantity > 10,
                     'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
-                      item.stock > 0 && item.stock <= 10,
+                      item.quantity > 0 && item.quantity <= 10,
                     'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200':
-                      item.stock === 0,
+                      item.quantity === 0,
                   }"
                 >
                   {{
-                    item.stock > 10
+                    item.quantity > 10
                       ? "In Stock"
-                      : item.stock > 0
+                      : item.quantity > 0
                       ? "Low Stock"
                       : "Out of Stock"
                   }}
@@ -282,7 +275,38 @@
                 </button>
               </td>
             </tr>
-            <tr v-if="filteredItems.length === 0">
+            <tr v-if="isLoading">
+              <td
+                colspan="6"
+                class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
+              >
+                <div class="flex justify-center items-center">
+                  <svg
+                    class="animate-spin h-5 w-5 mr-3 text-primary dark:text-dark-primary"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Loading items...
+                </div>
+              </td>
+            </tr>
+
+            <tr v-if="showEmptyState">
               <td
                 colspan="6"
                 class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
@@ -307,7 +331,7 @@
               to
               <span class="font-medium">{{ paginationEnd }}</span>
               of
-              <span class="font-medium">{{ items.length }}</span>
+              <span class="font-medium">{{ totalItems }}</span>
               results
             </p>
           </div>
@@ -317,7 +341,12 @@
               aria-label="Pagination"
             >
               <button
-                @click="currentPage = Math.max(1, currentPage - 1)"
+                @click="
+                  () => {
+                    currentPage = Math.max(1, currentPage - 1);
+                    fetchItems();
+                  }
+                "
                 :disabled="currentPage === 1"
                 class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
               >
@@ -344,7 +373,12 @@
                     page === totalPages ||
                     (page >= currentPage - 1 && page <= currentPage + 1)
                   "
-                  @click="currentPage = page"
+                  @click="
+                    () => {
+                      currentPage = page;
+                      fetchItems();
+                    }
+                  "
                   :class="[
                     'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
                     currentPage === page
@@ -364,7 +398,12 @@
                 </span>
               </template>
               <button
-                @click="currentPage = Math.min(totalPages, currentPage + 1)"
+                @click="
+                  () => {
+                    currentPage = Math.min(totalPages, currentPage + 1);
+                    fetchItems();
+                  }
+                "
                 :disabled="currentPage === totalPages"
                 class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
               >
@@ -434,6 +473,36 @@
                         class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                       />
                     </div>
+
+                    <div>
+                      <label
+                        for="company_name"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Company Name</label
+                      >
+                      <input
+                        id="company_name"
+                        v-model="currentItem.company_name"
+                        type="text"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        for="supplier_id"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Supplier ID</label
+                      >
+                      <input
+                        id="supplier_id"
+                        v-model="currentItem.supplier_id"
+                        type="number"
+                        min="1"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      />
+                    </div>
+
                     <div>
                       <label
                         for="category"
@@ -442,20 +511,24 @@
                       >
                       <select
                         id="category"
-                        v-model="currentItem.category"
+                        v-model="currentItem.category_id"
                         class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary text-gray-700 dark:text-white sm:text-sm"
                       >
-                        <option value="drinks">Drinks</option>
-                        <option value="food">Food</option>
-                        <option value="snacks">Snacks</option>
-                        <option value="merchandise">Merchandise</option>
+                        <option
+                          v-for="category in categories"
+                          :key="category.id"
+                          :value="category.id"
+                        >
+                          {{ category.name }}
+                        </option>
                       </select>
                     </div>
+
                     <div>
                       <label
-                        for="price"
+                        for="buy_price"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Price</label
+                        >Buy Price</label
                       >
                       <div class="mt-1 relative rounded-md shadow-sm">
                         <div
@@ -464,35 +537,83 @@
                           <span
                             class="text-gray-500 dark:text-gray-400 sm:text-sm"
                           >
-                            $
+                            Rp
+                          </span>
+                        </div>
+                        <input
+                          id="buy_price"
+                          v-model="currentItem.buy_price"
+                          type="number"
+                          min="0"
+                          class="pl-8 pr-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        for="price"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Sell Price</label
+                      >
+                      <div class="mt-1 relative rounded-md shadow-sm">
+                        <div
+                          class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                        >
+                          <span
+                            class="text-gray-500 dark:text-gray-400 sm:text-sm"
+                          >
+                            Rp
                           </span>
                         </div>
                         <input
                           id="price"
-                          v-model="currentItem.price"
+                          v-model="currentItem.sell_price"
                           type="number"
                           min="0"
-                          step="0.01"
-                          class="pl-7 pr-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
-                          placeholder="0.00"
+                          step="1000"
+                          class="pl-8 pr-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                          placeholder="0"
                         />
                       </div>
                     </div>
+
                     <div>
                       <label
-                        for="stock"
+                        for="custom_tax"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Stock</label
+                        >Custom Tax (%)</label
                       >
                       <input
-                        id="stock"
-                        v-model="currentItem.stock"
+                        id="custom_tax"
+                        v-model="currentItem.custom_tax"
                         type="number"
                         min="0"
+                        max="100"
+                        step="0.01"
                         class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
-                        placeholder="0"
+                        placeholder="0.00"
                       />
                     </div>
+
+                    <div>
+                      <label
+                        for="point"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Points</label
+                      >
+                      <input
+                        id="point"
+                        v-model="currentItem.point"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                        placeholder="0.00"
+                      />
+                    </div>
+
                     <div>
                       <label
                         for="description"
@@ -506,42 +627,83 @@
                         class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                       ></textarea>
                     </div>
+
                     <div>
                       <label
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
                         >Image</label
                       >
-                      <div class="mt-1 flex items-center">
-                        <span
-                          class="h-12 w-12 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-600"
+                      <div class="mt-1 flex flex-col items-start space-y-2">
+                        <div
+                          class="w-full h-40 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-600"
                         >
                           <img
-                            v-if="currentItem.image"
-                            :src="currentItem.image"
+                            v-if="currentItem.picturePreview"
+                            :src="currentItem.picturePreview"
+                            class="h-full w-full object-cover object-center"
+                          />
+                          <img
+                            v-else-if="currentItem.picture"
+                            :src="`https://pos-api.buahbibir.co.id/storage/pictures/${currentItem.picture}`"
                             class="h-full w-full object-cover"
                           />
-                          <svg
+                          <div
                             v-else
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-full w-full text-gray-300 dark:text-gray-500"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                            class="h-full w-full flex items-center justify-center text-gray-300 dark:text-gray-500"
                           >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                        </span>
-                        <button
-                          type="button"
-                          class="ml-5 bg-white dark:bg-gray-700 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-dark-primary"
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="h-16 w-16"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+
+                        <div class="flex items-center">
+                          <input
+                            type="file"
+                            ref="fileInput"
+                            accept="image/*"
+                            class="hidden"
+                            @change="handleFileUpload"
+                          />
+                          <button
+                            type="button"
+                            @click="$refs.fileInput.click()"
+                            class="bg-white dark:bg-gray-700 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-dark-primary"
+                          >
+                            {{
+                              currentItem.picture || currentItem.picturePreview
+                                ? "Change"
+                                : "Upload"
+                            }}
+                          </button>
+
+                          <button
+                            v-if="currentItem.picturePreview || selectedFile"
+                            type="button"
+                            @click="clearImageSelection"
+                            class="ml-2 bg-white dark:bg-gray-700 py-2 px-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm leading-4 font-medium text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          >
+                            Clear
+                          </button>
+                        </div>
+
+                        <div
+                          v-if="selectedFile"
+                          class="text-sm text-gray-500 dark:text-gray-400"
                         >
-                          Change
-                        </button>
+                          Selected: {{ selectedFile.name }}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -604,8 +766,8 @@
                       class="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden"
                     >
                       <img
-                        v-if="currentItem.image"
-                        :src="currentItem.image"
+                        v-if="currentItem.picture"
+                        :src="`https://pos-api.buahbibir.co.id/storage/pictures/${currentItem.picture}`"
                         class="w-full h-full object-cover"
                       />
                       <div
@@ -648,19 +810,9 @@
                       </dt>
                       <dd class="mt-1">
                         <span
-                          class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
-                          :class="{
-                            'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200':
-                              currentItem.category === 'drinks',
-                            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                              currentItem.category === 'food',
-                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
-                              currentItem.category === 'snacks',
-                            'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200':
-                              currentItem.category === 'merchandise',
-                          }"
+                          class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                         >
-                          {{ currentItem.category }}
+                          {{ currentItem.category?.name || "Unknown" }}
                         </span>
                       </dd>
                     </div>
@@ -671,7 +823,7 @@
                         Price
                       </dt>
                       <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ formatCurrency(currentItem.price) }}
+                        {{ formatCurrency(currentItem.sell_price) }}
                       </dd>
                     </div>
                     <div>
@@ -681,7 +833,7 @@
                         Stock
                       </dt>
                       <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ currentItem.stock }} units
+                        {{ currentItem.quantity }} units
                       </dd>
                     </div>
                     <div class="sm:col-span-2">
@@ -703,7 +855,7 @@
                         Added On
                       </dt>
                       <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ formatDate(currentItem.dateAdded) }}
+                        {{ formatDate(currentItem.created_at) }}
                       </dd>
                     </div>
                     <div>
@@ -717,17 +869,18 @@
                           class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
                           :class="{
                             'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                              currentItem.stock > 10,
+                              currentItem.quantity > 10,
                             'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
-                              currentItem.stock > 0 && currentItem.stock <= 10,
+                              currentItem.quantity > 0 &&
+                              currentItem.quantity <= 10,
                             'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200':
-                              currentItem.stock === 0,
+                              currentItem.quantity === 0,
                           }"
                         >
                           {{
-                            currentItem.stock > 10
+                            currentItem.quantity > 10
                               ? "In Stock"
-                              : currentItem.stock > 0
+                              : currentItem.quantity > 0
                               ? "Low Stock"
                               : "Out of Stock"
                           }}
@@ -842,66 +995,19 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watchEffect } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import apiService from "../../services/api";
 
-// sample data cuz i haven't implemented the API yet
-const items = ref([
-  {
-    id: 1,
-    name: "Coffee Latte",
-    category: "drinks",
-    price: 4.99,
-    stock: 100,
-    description: "Smooth espresso with steamed milk and a light layer of foam.",
-    image: null,
-    dateAdded: new Date("2023-04-15"),
-  },
-  {
-    id: 2,
-    name: "Chocolate Muffin",
-    category: "food",
-    price: 3.49,
-    stock: 45,
-    description: "Rich chocolate muffin with chocolate chips.",
-    image: null,
-    dateAdded: new Date("2023-04-10"),
-  },
-  {
-    id: 3,
-    name: "Potato Chips",
-    category: "snacks",
-    price: 1.99,
-    stock: 8,
-    description: "Crispy salted potato chips.",
-    image: null,
-    dateAdded: new Date("2023-04-05"),
-  },
-  {
-    id: 4,
-    name: "Coffee Mug",
-    category: "merchandise",
-    price: 9.99,
-    stock: 25,
-    description: "Branded coffee mug with logo.",
-    image: null,
-    dateAdded: new Date("2023-03-28"),
-  },
-  {
-    id: 5,
-    name: "Espresso",
-    category: "drinks",
-    price: 3.49,
-    stock: 0,
-    description:
-      "Strong coffee brewed by forcing hot water under pressure through finely-ground coffee beans.",
-    image: null,
-    dateAdded: new Date("2023-03-20"),
-  },
-]);
+const items = ref([]);
+const categories = ref([]);
+const totalItems = ref(0);
+const isLoading = ref(true);
+const error = ref(null);
 
 const searchQuery = ref("");
 const categoryFilter = ref("");
 const sortBy = ref("name");
+const sortDirection = ref("asc");
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 
@@ -912,110 +1018,210 @@ const isEditing = ref(false);
 const currentItem = ref({
   id: null,
   name: "",
-  category: "drinks",
-  price: 0,
-  stock: 0,
+  company_name: "",
+  supplier_id: null,
+  category_id: null,
+  buy_price: 0,
+  sell_price: 0,
+  custom_tax: null,
   description: "",
-  image: null,
-  dateAdded: new Date(),
+  picture: null,
+  point: 0,
+  quantity: 0,
 });
+
+const fileInput = ref(null);
+const selectedFile = ref(null);
+
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    selectedFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      currentItem.value.picturePreview = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
 
 const filteredItems = computed(() => {
-  let result = [...items.value];
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    result = result.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query) ||
-        item.description?.toLowerCase().includes(query)
-    );
+  if (isLoading.value) {
+    return [];
   }
+  return items.value || [];
+});
 
-  if (categoryFilter.value) {
-    result = result.filter((item) => item.category === categoryFilter.value);
+const showEmptyState = computed(() => {
+  return !isLoading.value && filteredItems.value.length === 0;
+});
+
+const clearImageSelection = () => {
+  selectedFile.value = null;
+  currentItem.value.picturePreview = null;
+  if (fileInput.value) {
+    fileInput.value.value = "";
   }
+};
 
-  result.sort((a, b) => {
-    if (sortBy.value === "name") {
-      return a.name.localeCompare(b.name);
-    } else if (sortBy.value === "price") {
-      return a.price - b.price;
-    } else if (sortBy.value === "stock") {
-      return a.stock - b.stock;
-    } else if (sortBy.value === "date") {
-      return new Date(b.dateAdded) - new Date(a.dateAdded);
+const fetchItems = async () => {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    let column = "name";
+    if (sortBy.value === "price") column = "sell_price";
+    if (sortBy.value === "stock") column = "quantity";
+    if (sortBy.value === "date") column = "created_at";
+
+    const response = await apiService.getItems({
+      limit: itemsPerPage.value,
+      page: currentPage.value,
+      column: column,
+      direction: sortDirection.value,
+      search: searchQuery.value || undefined,
+      category_id: categoryFilter.value || undefined,
+    });
+
+    items.value = response.data.data.data;
+    totalItems.value = response.data.data.total;
+    currentPage.value = response.data.data.current_page;
+
+    extractCategories();
+  } catch (err) {
+    error.value = "Failed to load items. Please try again.";
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const extractCategories = () => {
+  const categoriesMap = new Map();
+
+  items.value.forEach((item) => {
+    if (item.category && !categoriesMap.has(item.category.id)) {
+      categoriesMap.set(item.category.id, item.category);
     }
-    return 0;
   });
 
-  return result;
-});
+  categories.value = Array.from(categoriesMap.values());
+};
 
-const paginatedItems = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value;
-  const end = start + itemsPerPage.value;
-  return filteredItems.value.slice(start, end);
-});
+const formatCurrency = (value) => {
+  const rupiah = value * 1000;
+
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(rupiah);
+};
+
+const prepareItemForAPI = (item) => {
+  const preparedItem = { ...item };
+  preparedItem.sell_price = parseFloat(
+    (preparedItem.sell_price / 1000).toFixed(2)
+  );
+  return preparedItem;
+};
+
+const prepareItemForUI = (item) => {
+  const preparedItem = { ...item };
+  preparedItem.sell_price_display = preparedItem.sell_price * 1000;
+  return preparedItem;
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid date";
+
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date);
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "Date error";
+  }
+};
+
+const toggleSort = (column) => {
+  if (sortBy.value === column) {
+    sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
+  } else {
+    sortBy.value = column;
+    sortDirection.value = "asc";
+  }
+  fetchItems();
+};
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredItems.value.length / itemsPerPage.value) || 1;
+  return Math.ceil(totalItems.value / itemsPerPage.value) || 1;
 });
 
 const paginationStart = computed(() => {
-  return Math.min(
-    (currentPage.value - 1) * itemsPerPage.value + 1,
-    filteredItems.value.length
-  );
+  return (currentPage.value - 1) * itemsPerPage.value + 1;
 });
 
 const paginationEnd = computed(() => {
-  return Math.min(
-    currentPage.value * itemsPerPage.value,
-    filteredItems.value.length
-  );
+  return Math.min(currentPage.value * itemsPerPage.value, totalItems.value);
 });
 
-watchEffect(() => {
-  if (searchQuery.value || categoryFilter.value) {
+watch(
+  [searchQuery, categoryFilter],
+  () => {
     currentPage.value = 1;
-  }
-});
+    fetchItems();
+  },
+  { immediate: false }
+);
 
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-};
-
-const formatDate = (date) => {
-  if (!date) return "";
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(date));
-};
+watch(
+  [sortBy, sortDirection],
+  () => {
+    fetchItems();
+  },
+  { immediate: false }
+);
 
 const openCreateModal = () => {
   isEditing.value = false;
   currentItem.value = {
     id: null,
     name: "",
-    category: "drinks",
-    price: 0,
-    stock: 0,
+    company_name: "",
+    supplier_id: null,
+    category_id: categories.value.length ? categories.value[0].id : null,
+    buy_price: 0,
+    sell_price: 0,
+    custom_tax: null,
     description: "",
-    image: null,
-    dateAdded: new Date(),
+    picture: null,
+    picturePreview: null,
+    point: 0,
   };
+  selectedFile.value = null;
+  if (fileInput.value) {
+    fileInput.value.value = "";
+  }
   isModalOpen.value = true;
 };
 
 const editItem = (item) => {
   isEditing.value = true;
-  currentItem.value = { ...item };
+  currentItem.value = {
+    ...item,
+    buy_price: item.buy_price * 1000,
+    sell_price: item.sell_price * 1000,
+  };
+  selectedFile.value = null;
+  if (fileInput.value) {
+    fileInput.value.value = "";
+  }
   isViewModalOpen.value = false;
   isModalOpen.value = true;
 };
@@ -1042,28 +1248,65 @@ const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
 };
 
-const saveItem = () => {
-  if (isEditing.value) {
-    const index = items.value.findIndex((i) => i.id === currentItem.value.id);
-    if (index !== -1) {
-      items.value[index] = { ...currentItem.value };
+const saveItem = async () => {
+  try {
+    const formData = new FormData();
+
+    const itemForAPI = { ...currentItem.value };
+
+    if (itemForAPI.buy_price) {
+      itemForAPI.buy_price = parseFloat(
+        (itemForAPI.buy_price / 1000).toFixed(2)
+      );
     }
-  } else {
-    const newId = Math.max(...items.value.map((item) => item.id), 0) + 1;
-    items.value.push({
-      ...currentItem.value,
-      id: newId,
-      dateAdded: new Date(),
+    if (itemForAPI.sell_price) {
+      itemForAPI.sell_price = parseFloat(
+        (itemForAPI.sell_price / 1000).toFixed(2)
+      );
+    }
+
+    delete itemForAPI.picturePreview;
+
+    Object.keys(itemForAPI).forEach((key) => {
+      if (
+        key !== "picture" &&
+        itemForAPI[key] !== null &&
+        itemForAPI[key] !== undefined
+      ) {
+        formData.append(key, itemForAPI[key]);
+      }
     });
+
+    if (selectedFile.value) {
+      formData.append("picture", selectedFile.value);
+    }
+
+    if (isEditing.value) {
+      await apiService.updateItem(itemForAPI.id, formData);
+    } else {
+      await apiService.createItem(formData);
+    }
+
+    closeModal();
+    fetchItems();
+  } catch (err) {
+    console.error("Error saving item:", err);
+    error.value = "Failed to save item. Please try again.";
   }
-  closeModal();
 };
 
-const deleteItem = () => {
-  const index = items.value.findIndex((i) => i.id === currentItem.value.id);
-  if (index !== -1) {
-    items.value.splice(index, 1);
+const deleteItem = async () => {
+  try {
+    await apiService.deleteItem(currentItem.value.id);
+    closeDeleteModal();
+    fetchItems();
+  } catch (err) {
+    console.error("Error deleting item:", err);
+    error.value = "Failed to delete item. Please try again.";
   }
-  closeDeleteModal();
 };
+
+onMounted(() => {
+  fetchItems();
+});
 </script>
