@@ -20,6 +20,12 @@ const routes = [
         component: () => import('../views/dashboard/DashboardView.vue'),
         meta: { title: 'Dashboard' }
       },
+      {
+        path: 'items',
+        name: 'item-management',
+        component: () => import('../views/dashboard/ItemsView.vue'),
+        meta: { title: 'Item Management' }
+      }
       // {
       //   path: 'profile',
       //   name: 'user-profile',
