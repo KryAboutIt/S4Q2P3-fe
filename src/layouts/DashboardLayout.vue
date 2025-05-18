@@ -67,7 +67,7 @@
         </div>
         <div v-if="!collapsed" class="ml-3 overflow-hidden">
           <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
-            John Tor
+            {{ userName }}
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
             {{ isManager ? "Manager" : "Cashier" }}
@@ -334,8 +334,10 @@
           </button>
 
           <button
+            @click="logout"
+            :disabled="isLoggingOut"
             class="flex items-center px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 w-full"
-            :class="{ 'justify-center': collapsed }"
+            :class="{ 'justify-center': collapsed, 'opacity-50': isLoggingOut }"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -351,7 +353,9 @@
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
               />
             </svg>
-            <span v-if="!collapsed" class="ml-3">Logout</span>
+            <span v-if="!collapsed" class="ml-3">
+              {{ isLoggingOut ? "Logging out..." : "Logout" }}
+            </span>
           </button>
         </div>
       </div>
@@ -393,7 +397,7 @@
               <button
                 class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               >
-                <span class="mr-2">John Tor</span>
+                <span class="mr-2">{{ userName }}</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-4 w-4"
@@ -423,10 +427,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import apiService from "../services/api";
 
-const isManager = ref(true); // all temp just for testing
+const router = useRouter();
+const route = useRoute();
 
+const isManager = ref(true);
 const userName = ref("John Tor");
 const userInitials = computed(() => {
   const names = userName.value.split(" ");
@@ -437,8 +444,27 @@ const userInitials = computed(() => {
 });
 
 const collapsed = ref(false);
-
 const isDarkMode = ref(false);
+const isLoggingOut = ref(false);
+
+const logout = async () => {
+  if (isLoggingOut.value) return;
+
+  isLoggingOut.value = true;
+  try {
+    await apiService.logout();
+    console.log("Logged out successfully");
+  } catch (error) {
+    console.error("Logout error:", error);
+  } finally {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userRole");
+
+    router.push("/login");
+    isLoggingOut.value = false;
+  }
+};
 
 const toggleDarkMode = () => {
   isDarkMode.value = !isDarkMode.value;
@@ -452,7 +478,6 @@ const toggleDarkMode = () => {
   }
 };
 
-const route = useRoute();
 const pageTitle = computed(() => {
   return route.meta.title || "Dashboard";
 });
@@ -467,8 +492,15 @@ onMounted(() => {
     isDarkMode.value = true;
   }
 
-  const userRole = localStorage.getItem("userRole");
-  localStorage.setItem("userRole", "1"); //set role
-  isManager.value = userRole === "1";
+  const user = localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user"))
+    : null;
+  if (user) {
+    userName.value =
+      `${user.first_name || ""} ${user.last_name || ""}`.trim() || "User";
+    isManager.value = user.role === 0;
+  } else {
+    router.push("/login");
+  }
 });
 </script>
