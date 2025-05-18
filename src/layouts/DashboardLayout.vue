@@ -67,7 +67,7 @@
         </div>
         <div v-if="!collapsed" class="ml-3 overflow-hidden">
           <p class="text-sm font-medium text-gray-800 dark:text-white truncate">
-            John Doe
+            John Tor
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
             {{ isManager ? "Manager" : "Cashier" }}
@@ -393,7 +393,7 @@
               <button
                 class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               >
-                <span class="mr-2">John Doe</span>
+                <span class="mr-2">John Tor</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-4 w-4"
@@ -427,7 +427,7 @@ import { useRoute } from "vue-router";
 
 const isManager = ref(true); // all temp just for testing
 
-const userName = ref("John Doe");
+const userName = ref("John Tor");
 const userInitials = computed(() => {
   const names = userName.value.split(" ");
   if (names.length > 1) {

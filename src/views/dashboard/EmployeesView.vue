@@ -1,0 +1,1000 @@
+<template>
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
+        Employees Management
+      </h1>
+      <button
+        @click="openCreateModal"
+        class="flex items-center space-x-2 bg-primary dark:bg-dark-primary hover:bg-primary-hover dark:hover:bg-dark-primary-hover text-white py-2 px-4 rounded-md shadow-sm transition-colors duration-200"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+          />
+        </svg>
+        <span>Add Employee</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="relative col-span-2">
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search employees..."
+          class="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary"
+        />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 text-gray-400 dark:text-gray-500 absolute left-3 top-3"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      </div>
+      <div class="flex space-x-4">
+        <select
+          v-model="roleFilter"
+          class="appearance-none w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded-md py-2 px-3 text-gray-700 dark:text-white leading-tight focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary cursor-pointer"
+        >
+          <option value="">All Roles</option>
+          <option value="0">Manager</option>
+          <option value="1">Cashier</option>
+          <option value="2">Staff</option>
+          <option value="3">Customer</option>
+        </select>
+        <select
+          v-model="sortBy"
+          class="appearance-none w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded-md py-2 px-3 text-gray-700 dark:text-white leading-tight focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary cursor-pointer"
+        >
+          <option value="name">Sort by Name</option>
+          <option value="role">Sort by Role</option>
+          <option value="date">Sort by Date Added</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead class="bg-gray-50 dark:bg-gray-700">
+            <tr>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+              >
+                Employee
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+              >
+                Role
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+              >
+                Contact
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+              >
+                Location
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"
+          >
+            <tr
+              v-for="employee in filteredEmployees"
+              :key="employee.id"
+              class="hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div
+                    class="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400"
+                  >
+                    {{ getInitials(employee.first_name + " " + employee.last_name) }}
+                  </div>
+                  <div class="ml-4">
+                    <div
+                      class="text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      {{ employee.first_name }} {{ employee.last_name }}
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                      {{ employee.email }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span
+                  class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                  :class="{
+                    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200': employee.role === 0,
+                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': employee.role === 1,
+                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': employee.role === 2,
+                    'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200': employee.role === 3
+                  }"
+                >
+                  {{ getRoleLabel(employee.role) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 dark:text-white">
+                  {{ employee.phone }}
+                </div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ employee.company_name || "N/A" }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 dark:text-white">
+                  {{ getShortAddress(employee.address) }}
+                </div>
+              </td>
+              <td
+                class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2"
+              >
+                <button
+                  @click="viewEmployee(employee)"
+                  class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-dark-primary"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  @click="editEmployee(employee)"
+                  class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-dark-primary"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  @click="confirmDelete(employee)"
+                  class="text-gray-600 dark:text-gray-400 hover:text-red-500"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+            <tr v-if="filteredEmployees.length === 0">
+              <td
+                colspan="5"
+                class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
+              >
+                No employees found matching your criteria
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        class="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6"
+      >
+        <div
+          class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
+        >
+          <div>
+            <p class="text-sm text-gray-700 dark:text-gray-400">
+              Showing
+              <span class="font-medium">{{ paginationStart }}</span>
+              to
+              <span class="font-medium">{{ paginationEnd }}</span>
+              of
+              <span class="font-medium">{{ employees.length }}</span>
+              results
+            </p>
+          </div>
+          <div>
+            <nav
+              class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+              aria-label="Pagination"
+            >
+              <button
+                @click="currentPage = Math.max(1, currentPage - 1)"
+                :disabled="currentPage === 1"
+                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
+              >
+                <span class="sr-only">Previous</span>
+                <svg
+                  class="h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </button>
+              <template v-for="page in totalPages" :key="page">
+                <button
+                  v-if="
+                    page === currentPage ||
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  "
+                  @click="currentPage = page"
+                  :class="[
+                    'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
+                    currentPage === page
+                      ? 'z-10 bg-primary dark:bg-dark-primary border-primary dark:border-dark-primary text-white'
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600',
+                  ]"
+                >
+                  {{ page }}
+                </button>
+                <span
+                  v-else-if="
+                    page === currentPage - 2 || page === currentPage + 2
+                  "
+                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-400"
+                >
+                  ...
+                </span>
+              </template>
+              <button
+                @click="currentPage = Math.min(totalPages, currentPage + 1)"
+                :disabled="currentPage === totalPages"
+                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
+              >
+                <span class="sr-only">Next</span>
+                <svg
+                  class="h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="isModalOpen"
+      class="fixed inset-0 z-10 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+      >
+        <div
+          class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity"
+          aria-hidden="true"
+          @click="closeModal"
+        ></div>
+
+        <div
+          class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+        >
+          <form
+            @submit.prevent="saveEmployee"
+            class="max-h-[calc(100vh-8rem)] flex flex-col"
+          >
+            <div
+              class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto"
+            >
+              <div class="sm:flex sm:items-start">
+                <div class="w-full mt-3 text-center sm:mt-0 sm:text-left">
+                  <h3
+                    class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+                    id="modal-title"
+                  >
+                    {{ isEditing ? "Edit Employee" : "Add New Employee" }}
+                  </h3>
+                  <div class="mt-4 space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          for="first_name"
+                          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                          >First Name</label
+                        >
+                        <input
+                          id="first_name"
+                          v-model="currentEmployee.first_name"
+                          type="text"
+                          class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          for="last_name"
+                          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                          >Last Name</label
+                        >
+                        <input
+                          id="last_name"
+                          v-model="currentEmployee.last_name"
+                          type="text"
+                          class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label
+                        for="email"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Email Address</label
+                      >
+                      <input
+                        id="email"
+                        v-model="currentEmployee.email"
+                        type="email"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        for="role"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Role</label
+                      >
+                      <select
+                        id="role"
+                        v-model="currentEmployee.role"
+                        class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary text-gray-700 dark:text-white sm:text-sm"
+                      >
+                        <option value="0">Manager</option>
+                        <option value="1">Cashier</option>
+                        <option value="2">Staff</option>
+                        <option value="3">Customer</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label
+                        for="phone"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Phone Number</label
+                      >
+                      <input
+                        id="phone"
+                        v-model="currentEmployee.phone"
+                        type="text"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        for="company_name"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Company Name</label
+                      >
+                      <input
+                        id="company_name"
+                        v-model="currentEmployee.company_name"
+                        type="text"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        for="gender"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Gender</label
+                      >
+                      <select
+                        id="gender"
+                        v-model="currentEmployee.gender"
+                        class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary text-gray-700 dark:text-white sm:text-sm"
+                      >
+                        <option :value="0">Male</option>
+                        <option :value="1">Female</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label
+                        for="address"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Address</label
+                      >
+                      <textarea
+                        id="address"
+                        v-model="currentEmployee.address"
+                        rows="2"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      ></textarea>
+                    </div>
+                    <div v-if="!isEditing">
+                      <label
+                        for="password"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Password</label
+                      >
+                      <input
+                        id="password"
+                        v-model="password"
+                        type="password"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div v-if="!isEditing">
+                      <label
+                        for="password_confirmation"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Confirm Password</label
+                      >
+                      <input
+                        id="password_confirmation"
+                        v-model="passwordConfirmation"
+                        type="password"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0">
+              <button
+                type="submit"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary dark:bg-dark-primary text-base font-medium text-white hover:bg-primary-hover dark:hover:bg-dark-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-dark-primary sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                {{ isEditing ? "Save Changes" : "Create Employee" }}
+              </button>
+              <button
+                type="button"
+                @click="closeModal"
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-gray-400 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="isViewModalOpen"
+      class="fixed inset-0 z-10 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+      >
+        <div
+          class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity"
+          aria-hidden="true"
+          @click="closeViewModal"
+        ></div>
+
+        <div
+          class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+        >
+          <div class="max-h-[calc(100vh-8rem)] flex flex-col">
+            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto">
+              <div class="sm:flex sm:items-start">
+                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                  <h3
+                    class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+                    id="modal-title"
+                  >
+                    Employee Details
+                  </h3>
+                  <div class="mt-4">
+                    <div class="flex justify-center mb-5">
+                      <div
+                        class="h-20 w-20 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 text-2xl"
+                      >
+                        {{ getInitials(currentEmployee.first_name + " " + currentEmployee.last_name) }}
+                      </div>
+                    </div>
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
+                      <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Name</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white font-medium">
+                          {{ currentEmployee.first_name }} {{ currentEmployee.last_name }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Role</dt>
+                        <dd class="mt-1">
+                          <span
+                            class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
+                            :class="{
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200': currentEmployee.role === 0,
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': currentEmployee.role === 1,
+                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': currentEmployee.role === 2,
+                              'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200': currentEmployee.role === 3
+                            }"
+                          >
+                            {{ getRoleLabel(currentEmployee.role) }}
+                          </span>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Gender</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentEmployee.gender === 0 ? 'Male' : 'Female' }}
+                        </dd>
+                      </div>
+                      <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Email</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ currentEmployee.email }}</dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ currentEmployee.phone }}</dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Company</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentEmployee.company_name || "N/A" }}
+                        </dd>
+                      </div>
+                      <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Address</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ currentEmployee.address }}</dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Account Created</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ formatDate(currentEmployee.created_at) }}</dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ formatDate(currentEmployee.updated_at) }}</dd>
+                      </div>
+                      <div v-if="currentEmployee.role === 3">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Points</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ currentEmployee.point }}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0">
+              <button
+                type="button"
+                @click="editEmployee(currentEmployee)"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary dark:bg-dark-primary text-base font-medium text-white hover:bg-primary-hover dark:hover:bg-dark-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-dark-primary sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                @click="closeViewModal"
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-gray-400 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="isDeleteModalOpen"
+      class="fixed inset-0 z-10 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+      >
+        <div
+          class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity"
+          aria-hidden="true"
+          @click="closeDeleteModal"
+        ></div>
+
+        <div
+          class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+        >
+          <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div
+                class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 sm:mx-0 sm:h-10 sm:w-10"
+              >
+                <svg
+                  class="h-6 w-6 text-red-600 dark:text-red-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3
+                  class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+                  id="modal-title"
+                >
+                  Delete Employee Account
+                </h3>
+                <div class="mt-2">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Are you sure you want to delete the account for "{{
+                      currentEmployee.first_name + " " + currentEmployee.last_name
+                    }}"? This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse"
+          >
+            <button
+              type="button"
+              @click="deleteEmployee"
+              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              @click="closeDeleteModal"
+              class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-gray-400 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, watchEffect } from "vue";
+
+// sample data
+const employees = ref([
+  {
+    id: 1,
+    role: 0,
+    first_name: "Noemi",
+    last_name: "Herzog",
+    email: "m@e.x",
+    phone: "02 069-8856-040",
+    gender: 0,
+    address: "51854 Goodwin Mission Suite 866\nLaurianeberg, FL 58093-4405",
+    email_verified_at: "2025-05-17T11:58:31.000000Z",
+    point: 444,
+    company_name: "Little PLC",
+    created_at: "2025-05-17T11:58:31.000000Z",
+    updated_at: "2025-05-17T11:58:31.000000Z"
+  },
+  {
+    id: 2,
+    role: 1,
+    first_name: "Autumn",
+    last_name: "Robel",
+    email: "ca@e.x",
+    phone: "2 055-4710-618",
+    gender: 1,
+    address: "2062 Elenor Gateway\nEast Brendonville, NJ 06586",
+    email_verified_at: "2025-05-17T11:58:31.000000Z",
+    point: 396,
+    company_name: "Erdman, Orn and Mitchell",
+    created_at: "2025-05-17T11:58:31.000000Z",
+    updated_at: "2025-05-17T11:58:31.000000Z"
+  },
+  {
+    id: 3,
+    role: 2,
+    first_name: "Misael",
+    last_name: "Crooks",
+    email: "s@e.x",
+    phone: "5 725-3075-651",
+    gender: 0,
+    address: "72969 Muller Circle Apt. 791\nNorth Daneton, AK 99560-2136",
+    email_verified_at: "2025-05-17T11:58:31.000000Z",
+    point: 471,
+    company_name: "Reynolds PLC",
+    created_at: "2025-05-17T11:58:31.000000Z",
+    updated_at: "2025-05-17T11:58:31.000000Z"
+  },
+  {
+    id: 4,
+    role: 3,
+    first_name: "Justine",
+    last_name: "Parker",
+    email: "cu@e.x",
+    phone: "8 657-9992-855",
+    gender: 1,
+    address: "4944 Abigail Spur\nNew Jammie, VT 46482-6452",
+    email_verified_at: "2025-05-17T11:58:31.000000Z",
+    point: 893,
+    company_name: "Bauch LLC",
+    created_at: "2025-05-17T11:58:31.000000Z",
+    updated_at: "2025-05-17T11:58:31.000000Z"
+  }
+]);
+
+const searchQuery = ref("");
+const roleFilter = ref("");
+const sortBy = ref("name");
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+const isModalOpen = ref(false);
+const isViewModalOpen = ref(false);
+const isDeleteModalOpen = ref(false);
+const isEditing = ref(false);
+const currentEmployee = ref({
+  id: null,
+  role: 2,
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone: "",
+  gender: 0,
+  address: "",
+  company_name: "",
+  point: 0,
+  created_at: new Date(),
+  updated_at: new Date(),
+});
+const password = ref("");
+const passwordConfirmation = ref("");
+
+const filteredEmployees = computed(() => {
+  let result = [...employees.value];
+  
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter(employee => 
+      employee.first_name.toLowerCase().includes(query) || 
+      employee.last_name.toLowerCase().includes(query) || 
+      employee.email.toLowerCase().includes(query) || 
+      employee.phone.toLowerCase().includes(query)
+    );
+  }
+  
+  if (roleFilter.value !== "") {
+    result = result.filter(employee => employee.role === parseInt(roleFilter.value));
+  }
+  
+  result.sort((a, b) => {
+    if (sortBy.value === "name") {
+      return (a.first_name + a.last_name).localeCompare(b.first_name + b.last_name);
+    } else if (sortBy.value === "role") {
+      return a.role - b.role;
+    } else if (sortBy.value === "date") {
+      return new Date(b.created_at) - new Date(a.created_at);
+    }
+    return 0;
+  });
+  
+  return result;
+});
+
+const paginationStart = computed(() => {
+  return Math.min((currentPage.value - 1) * itemsPerPage.value + 1, filteredEmployees.value.length);
+});
+
+const paginationEnd = computed(() => {
+  return Math.min(currentPage.value * itemsPerPage.value, filteredEmployees.value.length);
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredEmployees.value.length / itemsPerPage.value) || 1;
+});
+
+watchEffect(() => {
+  if (searchQuery.value || roleFilter.value) {
+    currentPage.value = 1;
+  }
+});
+
+const formatDate = (date) => {
+  if (!date) return '';
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(new Date(date));
+};
+
+const getInitials = (name) => {
+  if (!name) return '';
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+};
+
+const getRoleLabel = (role) => {
+  switch (parseInt(role)) {
+    case 0: return 'Manager';
+    case 1: return 'Cashier';
+    case 2: return 'Staff';
+    case 3: return 'Customer';
+    default: return 'Unknown';
+  }
+};
+
+const getShortAddress = (address) => {
+  if (!address) return '';
+  const firstLine = address.split('\n')[0];
+  return firstLine.length > 30 ? firstLine.substring(0, 30) + '...' : firstLine;
+};
+
+const openCreateModal = () => {
+  isEditing.value = false;
+  currentEmployee.value = {
+    id: null,
+    role: 2,
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    gender: 0,
+    address: "",
+    company_name: "",
+    point: 0,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+  password.value = "";
+  passwordConfirmation.value = "";
+  isModalOpen.value = true;
+};
+
+const editEmployee = (employee) => {
+  isEditing.value = true;
+  currentEmployee.value = { ...employee };
+  currentEmployee.value.role = parseInt(currentEmployee.value.role);
+  currentEmployee.value.gender = parseInt(currentEmployee.value.gender);
+  isViewModalOpen.value = false;
+  isModalOpen.value = true;
+};
+
+const viewEmployee = (employee) => {
+  currentEmployee.value = { ...employee };
+  isViewModalOpen.value = true;
+};
+
+const confirmDelete = (employee) => {
+  currentEmployee.value = { ...employee };
+  isDeleteModalOpen.value = true;
+};
+
+const closeModal = () => {
+  isModalOpen.value = false;
+};
+
+const closeViewModal = () => {
+  isViewModalOpen.value = false;
+};
+
+const closeDeleteModal = () => {
+  isDeleteModalOpen.value = false;
+};
+
+const saveEmployee = () => {
+  const now = new Date().toISOString();
+  
+  if (isEditing.value) {
+    const index = employees.value.findIndex(e => e.id === currentEmployee.value.id);
+    if (index !== -1) {
+      employees.value[index] = { 
+        ...currentEmployee.value, 
+        updated_at: now 
+      };
+    }
+  } else {
+    const newId = Math.max(...employees.value.map(employee => employee.id), 0) + 1;
+    employees.value.push({
+      ...currentEmployee.value,
+      id: newId,
+      email_verified_at: now,
+      created_at: now,
+      updated_at: now
+    });
+  }
+  closeModal();
+};
+
+const deleteEmployee = () => {
+  const index = employees.value.findIndex(e => e.id === currentEmployee.value.id);
+  if (index !== -1) {
+    employees.value.splice(index, 1);
+  }
+  closeDeleteModal();
+};
+</script>

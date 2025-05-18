@@ -31,6 +31,12 @@ const routes = [
         name: 'supplier-management',
         component: () => import('../views/dashboard/SuppliersView.vue'),
         meta: { title: 'Supplier Management' }
+      },
+      {
+        path: 'employees',
+        name: 'employee-management',
+        component: () => import('../views/dashboard/EmployeesView.vue'),
+        meta: { title: 'Employee Management' }
       }
       // {
       //   path: 'profile',
