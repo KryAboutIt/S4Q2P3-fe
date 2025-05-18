@@ -25,6 +25,12 @@ const routes = [
         name: 'item-management',
         component: () => import('../views/dashboard/ItemsView.vue'),
         meta: { title: 'Item Management' }
+      },
+      {
+        path: 'suppliers',
+        name: 'supplier-management',
+        component: () => import('../views/dashboard/SuppliersView.vue'),
+        meta: { title: 'Supplier Management' }
       }
       // {
       //   path: 'profile',
