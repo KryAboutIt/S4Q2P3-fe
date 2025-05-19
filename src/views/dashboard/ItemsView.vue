@@ -763,7 +763,7 @@
                 <div class="mt-4">
                   <div class="aspect-w-4 aspect-h-3 mb-4">
                     <div
-                      class="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden"
+                      class="w-full h-40 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden"
                     >
                       <img
                         v-if="currentItem.picture"
@@ -1087,7 +1087,7 @@ const fetchItems = async () => {
     totalItems.value = response.data.data.total;
     currentPage.value = response.data.data.current_page;
 
-    extractCategories();
+    fetchCategories();
   } catch (err) {
     error.value = "Failed to load items. Please try again.";
   } finally {
@@ -1095,16 +1095,24 @@ const fetchItems = async () => {
   }
 };
 
-const extractCategories = () => {
-  const categoriesMap = new Map();
-
-  items.value.forEach((item) => {
-    if (item.category && !categoriesMap.has(item.category.id)) {
-      categoriesMap.set(item.category.id, item.category);
+const fetchCategories = async () => {
+  try {
+    const response = await apiService.getCategories({
+      limit: 100,
+      column: 'name',
+      direction: 'asc',
+    });
+    
+    if (response && response.data && response.data.data) {
+      categories.value = response.data.data.data || [];
+    } else {
+      console.error('Unexpected API response structure for categories:', response);
+      categories.value = [];
     }
-  });
-
-  categories.value = Array.from(categoriesMap.values());
+  } catch (err) {
+    console.error('Error fetching categories:', err);
+    categories.value = [];
+  }
 };
 
 const formatCurrency = (value) => {
@@ -1308,5 +1316,6 @@ const deleteItem = async () => {
 
 onMounted(() => {
   fetchItems();
+  fetchCategories();
 });
 </script>

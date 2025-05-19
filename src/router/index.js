@@ -37,6 +37,18 @@ const routes = [
         name: 'employee-management',
         component: () => import('../views/dashboard/EmployeesView.vue'),
         meta: { title: 'Employee Management' }
+      },
+      {
+        path: 'sales',
+        name: 'sales-management',
+        component: () => import('../views/dashboard/SalesView.vue'),
+        meta: { title: 'Sales Management' }
+      },
+      {
+        path: 'configuration',
+        name: 'configuration',
+        component: () => import('../views/dashboard/ConfigurationView.vue'),
+        meta: { title: 'Configuration' }
       }
       // {
       //   path: 'profile',

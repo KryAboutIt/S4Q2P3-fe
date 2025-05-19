@@ -95,8 +95,69 @@ export default {
     return apiClient.post(`/items/${id}?_method=PUT`, itemData, { headers });
   },
 
-  getCategories() {
-    return apiClient.get("/categories");
+  getSales(params = {}) {
+    return apiClient.get("/sales", { params });
+  },
+
+  getSale(id) {
+    return apiClient.get(`/sales/${id}`);
+  },
+
+  createSale(saleData) {
+    return apiClient.post("/sales", saleData);
+  },
+
+  getPaymentMethods() {
+    return apiClient.get("/payments");
+  },
+
+  getCustomers(params = {}) {
+    return apiClient.get("/users", {
+      params: {
+        ...params,
+        role: "customer",
+      },
+    });
+  },
+
+  createCustomer(customerData) {
+    return apiClient.post("/users", customerData);
+  },
+
+  updateCustomer(id, customerData) {
+    return apiClient.patch(`/users/${id}`, customerData);
+  },
+
+  getCategories(params = {}) {
+    return apiClient.get("/categories", { params });
+  },
+
+  getCategory(id) {
+    return apiClient.get(`/categories/${id}`);
+  },
+
+  createCategory(categoryData) {
+    return apiClient.post("/categories", categoryData);
+  },
+
+  updateCategory(id, categoryData) {
+    return apiClient.put(`/categories/${id}`, categoryData);
+  },
+
+  deleteCategory(id) {
+    return apiClient.delete(`/categories/${id}`);
+  },
+
+  createPaymentMethod(paymentData) {
+    return apiClient.post("/payments", paymentData);
+  },
+
+  updatePaymentMethod(id, paymentData) {
+    return apiClient.put(`/payments/${id}`, paymentData);
+  },
+
+  deletePaymentMethod(id) {
+    return apiClient.delete(`/payments/${id}`);
   },
 
   //   getSuppliers(page = 1) {
