@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
-        Employees Management
+        Customer Management
       </h1>
       <button
         @click="openCreateModal"
@@ -22,7 +22,7 @@
             d="M12 6v6m0 0v6m0-6h6m-6 0H6"
           />
         </svg>
-        <span>Add Employee</span>
+        <span>Add Customer</span>
       </button>
     </div>
 
@@ -31,7 +31,7 @@
         <input
           type="text"
           v-model="searchQuery"
-          placeholder="Search cashiers..."
+          placeholder="Search customers..."
           class="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary"
         />
         <svg
@@ -69,13 +69,13 @@
                 scope="col"
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
-                Employee
+                Customer
               </th>
               <th
                 scope="col"
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
-                Role
+                Points
               </th>
               <th
                 scope="col"
@@ -97,21 +97,11 @@
               </th>
             </tr>
           </thead>
-          <tbody
-            class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"
-          >
+          <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             <tr v-if="isLoading">
-              <td
-                colspan="5"
-                class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
-              >
+              <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                 <div class="flex justify-center items-center">
-                  <svg
-                    class="animate-spin h-5 w-5 mr-3 text-primary dark:text-dark-primary"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg class="animate-spin h-5 w-5 mr-3 text-primary dark:text-dark-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle
                       class="opacity-25"
                       cx="12"
@@ -126,7 +116,7 @@
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Loading employees...
+                  Loading customers...
                 </div>
               </td>
             </tr>
@@ -135,18 +125,15 @@
                 {{ error }}
               </td>
             </tr>
-            <tr v-else-if="filteredEmployees.length === 0 && !isLoading">
-              <td
-                colspan="5"
-                class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
-              >
-                No employees found matching your criteria
+            <tr v-else-if="filteredCustomers.length === 0 && !isLoading">
+              <td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                No customers found matching your criteria
               </td>
             </tr>
             <tr
               v-else
-              v-for="employee in filteredEmployees"
-              :key="employee.id"
+              v-for="customer in filteredCustomers"
+              :key="customer.id"
               class="hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               <td class="px-6 py-4 whitespace-nowrap">
@@ -154,59 +141,34 @@
                   <div
                     class="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400"
                   >
-                    {{
-                      getInitials(
-                        employee.first_name + " " + employee.last_name
-                      )
-                    }}
+                    {{ getInitials(customer.first_name + " " + customer.last_name) }}
                   </div>
                   <div class="ml-4">
-                    <div
-                      class="text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                      {{ employee.first_name }} {{ employee.last_name }}
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ customer.first_name }} {{ customer.last_name }}
                     </div>
                     <div class="text-sm text-gray-500 dark:text-gray-400">
-                      {{ employee.email }}
+                      {{ customer.email }}
                     </div>
                   </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
-                  :class="{
-                    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200':
-                      employee.role === 0,
-                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200':
-                      employee.role === 1,
-                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                      employee.role === 2,
-                    'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200':
-                      employee.role === 3,
-                  }"
-                >
-                  {{ getRoleLabel(employee.role) }}
+                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                  {{ customer.point || 0 }} pts
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-900 dark:text-white">
-                  {{ employee.phone }}
-                </div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ employee.company_name || "N/A" }}
+                  {{ customer.phone || "N/A" }}
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900 dark:text-white">
-                  {{ getShortAddress(employee.address) }}
-                </div>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                {{ getShortAddress(customer.address) }}
               </td>
-              <td
-                class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2"
-              >
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                 <button
-                  @click="viewEmployee(employee)"
+                  @click="viewCustomer(customer)"
                   class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-dark-primary"
                 >
                   <svg
@@ -231,7 +193,7 @@
                   </svg>
                 </button>
                 <button
-                  @click="editEmployee(employee)"
+                  @click="editCustomer(customer)"
                   class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-dark-primary"
                 >
                   <svg
@@ -250,7 +212,7 @@
                   </svg>
                 </button>
                 <button
-                  @click="confirmDelete(employee)"
+                  @click="confirmDelete(customer)"
                   class="text-gray-600 dark:text-gray-400 hover:text-red-500"
                 >
                   <svg
@@ -274,12 +236,8 @@
         </table>
       </div>
 
-      <div
-        class="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6"
-      >
-        <div
-          class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
-        >
+      <div class="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p class="text-sm text-gray-700 dark:text-gray-400">
               Showing
@@ -287,15 +245,12 @@
               to
               <span class="font-medium">{{ paginationEnd }}</span>
               of
-              <span class="font-medium">{{ totalEmployees }}</span>
+              <span class="font-medium">{{ totalCustomers }}</span>
               results
             </p>
           </div>
           <div>
-            <nav
-              class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-              aria-label="Pagination"
-            >
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
               <button
                 @click="currentPage = Math.max(1, currentPage - 1)"
                 :disabled="currentPage === 1 || isLoading"
@@ -336,9 +291,7 @@
                   {{ page }}
                 </button>
                 <span
-                  v-else-if="
-                    page === currentPage - 2 || page === currentPage + 2
-                  "
+                  v-else-if="page === currentPage - 2 || page === currentPage + 2"
                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-400"
                 >
                   ...
@@ -377,9 +330,7 @@
       role="dialog"
       aria-modal="true"
     >
-      <div
-        class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
-      >
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div
           class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity"
           aria-hidden="true"
@@ -389,20 +340,15 @@
         <div
           class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
         >
-          <form
-            @submit.prevent="saveEmployee"
-            class="max-h-[calc(100vh-8rem)] flex flex-col"
-          >
-            <div
-              class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto"
-            >
+          <form @submit.prevent="saveCustomer" class="max-h-[calc(100vh-8rem)] flex flex-col">
+            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto">
               <div class="sm:flex sm:items-start">
                 <div class="w-full mt-3 text-center sm:mt-0 sm:text-left">
                   <h3
                     class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
                     id="modal-title"
                   >
-                    {{ isEditing ? "Edit Employee" : "Add New Employee" }}
+                    {{ isEditing ? "Edit Customer" : "Add New Customer" }}
                   </h3>
                   <div class="mt-4 space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -410,11 +356,10 @@
                         <label
                           for="first_name"
                           class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                          >First Name</label
-                        >
+                        >First Name</label>
                         <input
                           id="first_name"
-                          v-model="currentEmployee.first_name"
+                          v-model="currentCustomer.first_name"
                           type="text"
                           class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                         />
@@ -423,11 +368,10 @@
                         <label
                           for="last_name"
                           class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                          >Last Name</label
-                        >
+                        >Last Name</label>
                         <input
                           id="last_name"
-                          v-model="currentEmployee.last_name"
+                          v-model="currentCustomer.last_name"
                           type="text"
                           class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                         />
@@ -437,40 +381,25 @@
                       <label
                         for="email"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Email Address</label
-                      >
+                      >Email Address</label>
                       <input
                         id="email"
-                        v-model="currentEmployee.email"
+                        v-model="currentCustomer.email"
                         type="email"
                         class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                       />
                     </div>
                     <div>
-                      <input type="hidden" v-model="currentEmployee.role" value="1" />
+                      <input type="hidden" v-model="currentCustomer.role" value="3" />
                     </div>
                     <div>
                       <label
                         for="phone"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Phone Number</label
-                      >
+                      >Phone Number</label>
                       <input
                         id="phone"
-                        v-model="currentEmployee.phone"
-                        type="text"
-                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        for="company_name"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Company Name</label
-                      >
-                      <input
-                        id="company_name"
-                        v-model="currentEmployee.company_name"
+                        v-model="currentCustomer.phone"
                         type="text"
                         class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                       />
@@ -479,11 +408,10 @@
                       <label
                         for="gender"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Gender</label
-                      >
+                      >Gender</label>
                       <select
                         id="gender"
-                        v-model="currentEmployee.gender"
+                        v-model="currentCustomer.gender"
                         class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary text-gray-700 dark:text-white sm:text-sm"
                       >
                         <option :value="0">Male</option>
@@ -494,11 +422,10 @@
                       <label
                         for="address"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Address</label
-                      >
+                      >Address</label>
                       <textarea
                         id="address"
-                        v-model="currentEmployee.address"
+                        v-model="currentCustomer.address"
                         rows="2"
                         class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                       ></textarea>
@@ -507,8 +434,7 @@
                       <label
                         for="password"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Password</label
-                      >
+                      >Password</label>
                       <input
                         id="password"
                         v-model="password"
@@ -520,8 +446,7 @@
                       <label
                         for="password_confirmation"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Confirm Password</label
-                      >
+                      >Confirm Password</label>
                       <input
                         id="password_confirmation"
                         v-model="passwordConfirmation"
@@ -533,9 +458,7 @@
                 </div>
               </div>
             </div>
-            <div
-              class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0"
-            >
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0">
               <button
                 type="submit"
                 class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary dark:bg-dark-primary text-base font-medium text-white hover:bg-primary-hover dark:hover:bg-dark-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-dark-primary sm:ml-3 sm:w-auto sm:text-sm"
@@ -569,7 +492,7 @@
                       : "Save Changes"
                     : isSaving
                     ? "Creating..."
-                    : "Create Employee"
+                    : "Create Customer"
                 }}
               </button>
               <button
@@ -592,9 +515,7 @@
       role="dialog"
       aria-modal="true"
     >
-      <div
-        class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
-      >
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div
           class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity"
           aria-hidden="true"
@@ -605,147 +526,86 @@
           class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
         >
           <div class="max-h-[calc(100vh-8rem)] flex flex-col">
-            <div
-              class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto"
-            >
+            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto">
               <div class="sm:flex sm:items-start">
                 <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
                   <h3
                     class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
                     id="modal-title"
                   >
-                    Employee Details
+                    Customer Details
                   </h3>
                   <div class="mt-4">
                     <div class="flex justify-center mb-5">
                       <div
                         class="h-20 w-20 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 text-2xl"
                       >
-                        {{
-                          getInitials(
-                            currentEmployee.first_name +
-                              " " +
-                              currentEmployee.last_name
-                          )
-                        }}
+                        {{ getInitials(currentCustomer.first_name + " " + currentCustomer.last_name) }}
                       </div>
                     </div>
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                       <div class="sm:col-span-2">
-                        <dt
-                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                        >
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
                           Name
                         </dt>
-                        <dd
-                          class="mt-1 text-sm text-gray-900 dark:text-white font-medium"
-                        >
-                          {{ currentEmployee.first_name }}
-                          {{ currentEmployee.last_name }}
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white font-medium">
+                          {{ currentCustomer.first_name }} {{ currentCustomer.last_name }}
                         </dd>
                       </div>
                       <div>
-                        <dt
-                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                        >
-                          Role
-                        </dt>
-                        <dd class="mt-1">
-                          <span
-                            class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
-                            :class="{
-                              'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200':
-                                currentEmployee.role === 0,
-                              'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200':
-                                currentEmployee.role === 1,
-                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                                currentEmployee.role === 2,
-                              'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200':
-                                currentEmployee.role === 3,
-                            }"
-                          >
-                            {{ getRoleLabel(currentEmployee.role) }}
-                          </span>
-                        </dd>
-                      </div>
-                      <div>
-                        <dt
-                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                        >
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
                           Gender
                         </dt>
                         <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                          {{ currentEmployee.gender === 0 ? "Male" : "Female" }}
-                        </dd>
-                      </div>
-                      <div class="sm:col-span-2">
-                        <dt
-                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                        >
-                          Email
-                        </dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                          {{ currentEmployee.email }}
+                          {{ currentCustomer.gender === 0 ? "Male" : "Female" }}
                         </dd>
                       </div>
                       <div>
-                        <dt
-                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                        >
-                          Phone
-                        </dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                          {{ currentEmployee.phone }}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt
-                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                        >
-                          Company
-                        </dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                          {{ currentEmployee.company_name || "N/A" }}
-                        </dd>
-                      </div>
-                      <div class="sm:col-span-2">
-                        <dt
-                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                        >
-                          Address
-                        </dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                          {{ currentEmployee.address }}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt
-                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                        >
-                          Account Created
-                        </dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                          {{ formatDate(currentEmployee.created_at) }}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt
-                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                        >
-                          Last Updated
-                        </dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                          {{ formatDate(currentEmployee.updated_at) }}
-                        </dd>
-                      </div>
-                      <div v-if="currentEmployee.role === 3">
-                        <dt
-                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                        >
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
                           Points
                         </dt>
                         <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                          {{ currentEmployee.point }}
+                          {{ currentCustomer.point || 0 }}
+                        </dd>
+                      </div>
+                      <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Email
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentCustomer.email }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Phone
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentCustomer.phone || 'N/A' }}
+                        </dd>
+                      </div>
+                      <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Address
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentCustomer.address || 'N/A' }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Account Created
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ formatDate(currentCustomer.created_at) }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Last Updated
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ formatDate(currentCustomer.updated_at) }}
                         </dd>
                       </div>
                     </dl>
@@ -753,12 +613,10 @@
                 </div>
               </div>
             </div>
-            <div
-              class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0"
-            >
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0">
               <button
                 type="button"
-                @click="editEmployee(currentEmployee)"
+                @click="editCustomer(currentCustomer)"
                 class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary dark:bg-dark-primary text-base font-medium text-white hover:bg-primary-hover dark:hover:bg-dark-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-dark-primary sm:ml-3 sm:w-auto sm:text-sm"
               >
                 Edit
@@ -783,9 +641,7 @@
       role="dialog"
       aria-modal="true"
     >
-      <div
-        class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
-      >
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div
           class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity"
           aria-hidden="true"
@@ -821,26 +677,20 @@
                   class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
                   id="modal-title"
                 >
-                  Delete Employee Account
+                  Delete Customer Account
                 </h3>
                 <div class="mt-2">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Are you sure you want to delete the account for "{{
-                      currentEmployee.first_name +
-                      " " +
-                      currentEmployee.last_name
-                    }}"? This action cannot be undone.
+                    Are you sure you want to delete the account for "{{ currentCustomer.first_name + " " + currentCustomer.last_name }}"? This action cannot be undone.
                   </p>
                 </div>
               </div>
             </div>
           </div>
-          <div
-            class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse"
-          >
+          <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
               type="button"
-              @click="deleteEmployee"
+              @click="deleteCustomer"
               class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
               :disabled="isDeleting"
             >
@@ -885,13 +735,12 @@
 import { ref, computed, onMounted, watch } from "vue";
 import apiService from "../../services/api";
 
-const employees = ref([]);
-const totalEmployees = ref(0);
+const customers = ref([]);
+const totalCustomers = ref(0);
 const isLoading = ref(true);
 const error = ref(null);
 
 const searchQuery = ref("");
-const roleFilter = ref("");
 const sortBy = ref("name");
 const sortDirection = ref("asc");
 const currentPage = ref(1);
@@ -904,9 +753,9 @@ const isDeleteModalOpen = ref(false);
 const isEditing = ref(false);
 const isSaving = ref(false);
 const isDeleting = ref(false);
-const currentEmployee = ref({
+const currentCustomer = ref({
   id: null,
-  role: 2,
+  role: 3,
   first_name: "",
   last_name: "",
   email: "",
@@ -921,7 +770,7 @@ const currentEmployee = ref({
 const password = ref("");
 const passwordConfirmation = ref("");
 
-const fetchEmployees = async () => {
+const fetchCustomers = async () => {
   isLoading.value = true;
   error.value = null;
 
@@ -943,148 +792,148 @@ const fetchEmployees = async () => {
     const response = await apiService.getUsers(params);
 
     if (response.data && response.data.data) {
-      const cashiers = response.data.data.data.filter(
-        user => parseInt(user.role) === 1
+      const customerUsers = response.data.data.data.filter(
+        user => parseInt(user.role) === 3
       );
       
-      employees.value = cashiers;
+      customers.value = customerUsers;
       
-      const cashierRatio = cashiers.length / response.data.data.data.length || 1;
-      totalEmployees.value = Math.floor(response.data.data.total * cashierRatio);
+      const customerRatio = customerUsers.length / response.data.data.data.length || 1;
+      totalCustomers.value = Math.floor(response.data.data.total * customerRatio);
       
       currentPage.value = response.data.data.current_page;
-      totalPages.value = Math.max(1, Math.ceil(totalEmployees.value / itemsPerPage.value));
+      totalPages.value = Math.max(1, Math.ceil(totalCustomers.value / itemsPerPage.value));
     } else {
       throw new Error("Unexpected API response structure");
     }
   } catch (err) {
-    console.error("Failed to fetch employees:", err);
-    error.value = "Failed to load cashiers. Please try again.";
-    employees.value = [];
+    console.error("Failed to fetch customers:", err);
+    error.value = "Failed to load customers. Please try again.";
+    customers.value = [];
     totalPages.value = 1;
-    totalEmployees.value = 0;
+    totalCustomers.value = 0;
   } finally {
     isLoading.value = false;
   }
 };
 
-const createEmployee = async () => {
-  if (!validateEmployeeForm()) return;
-
+const createCustomer = async () => {
+  if (!validateCustomerForm()) return;
+  
   isSaving.value = true;
-
+  
   try {
-    const employeeData = {
-      ...currentEmployee.value,
+    const customerData = {
+      ...currentCustomer.value,
       password: password.value,
       password_confirmation: passwordConfirmation.value,
     };
-
-    await apiService.createUser(employeeData);
+    
+    await apiService.createUser(customerData);
     closeModal();
-    fetchEmployees();
+    fetchCustomers();
   } catch (err) {
-    console.error("Failed to create employee:", err);
-    alert("Failed to create employee. Please try again.");
+    console.error("Failed to create customer:", err);
+    alert(`Failed to create customer. ${err.response?.data?.message || "Please try again."}`);
   } finally {
     isSaving.value = false;
   }
 };
 
-const updateEmployee = async () => {
-  if (!validateEmployeeForm(true)) return;
-
+const updateCustomer = async () => {
+  if (!validateCustomerForm(true)) return;
+  
   isSaving.value = true;
-
+  
   try {
-    const employeeData = { ...currentEmployee.value };
-
-    employeeData.role = 1;
-
+    const customerData = { ...currentCustomer.value };
+    
+    customerData.role = 3;
+    
     if (password.value) {
-      employeeData.password = password.value;
-      employeeData.password_confirmation = passwordConfirmation.value;
+      customerData.password = password.value;
+      customerData.password_confirmation = passwordConfirmation.value;
     }
-
-    await apiService.updateUser(currentEmployee.value.id, employeeData);
+    
+    await apiService.updateUser(currentCustomer.value.id, customerData);
     closeModal();
-    fetchEmployees();
+    fetchCustomers();
   } catch (err) {
-    console.error("Failed to update employee:", err);
-    alert("Failed to update employee. Please try again.");
+    console.error("Failed to update customer:", err);
+    alert("Failed to update customer. Please try again.");
   } finally {
     isSaving.value = false;
   }
 };
 
-const deleteEmployee = async () => {
+const deleteCustomer = async () => {
   isDeleting.value = true;
-
+  
   try {
-    await apiService.deleteUser(currentEmployee.value.id);
+    await apiService.deleteUser(currentCustomer.value.id);
     closeDeleteModal();
-    fetchEmployees();
+    fetchCustomers();
   } catch (err) {
-    console.error("Failed to delete employee:", err);
-    alert("Failed to delete employee. It may be referenced by other records.");
+    console.error("Failed to delete customer:", err);
+    alert(`Failed to delete customer. ${err.response?.data?.message || "Please try again."}`);
   } finally {
     isDeleting.value = false;
   }
 };
 
-const validateEmployeeForm = (isEdit = false) => {
-  if (!currentEmployee.value.first_name) {
+const validateCustomerForm = (isEdit = false) => {
+  if (!currentCustomer.value.first_name) {
     alert("First name is required");
     return false;
   }
-
-  if (!currentEmployee.value.email) {
+  
+  if (!currentCustomer.value.email) {
     alert("Email is required");
     return false;
   }
-
-  if (currentEmployee.value.phone) {
-    const phoneDigits = currentEmployee.value.phone.replace(/\D/g, "");
-
+  
+  if (currentCustomer.value.phone) {
+    const phoneDigits = currentCustomer.value.phone.replace(/\D/g, '');
+    
     if (phoneDigits.length < 10 || phoneDigits.length > 13) {
       alert("Phone number must be between 10 and 13 digits");
       return false;
     }
   }
-
+  
   if (!isEdit && !password.value) {
-    alert("Password is required for new employees");
+    alert("Password is required for new customers");
     return false;
   }
-
+  
   if (password.value && password.value !== passwordConfirmation.value) {
     alert("Passwords do not match");
     return false;
   }
-
+  
   return true;
 };
 
-const saveEmployee = () => {
+const saveCustomer = () => {
   if (isEditing.value) {
-    updateEmployee();
+    updateCustomer();
   } else {
-    createEmployee();
+    createCustomer();
   }
 };
 
-const filteredEmployees = computed(() => {
-  return employees.value;
+const filteredCustomers = computed(() => {
+  return customers.value;
 });
 
 const paginationStart = computed(() => {
-  if (employees.value.length === 0) return 0;
+  if (customers.value.length === 0) return 0;
   return 1 + (currentPage.value - 1) * itemsPerPage.value;
 });
 
 const paginationEnd = computed(() => {
-  if (employees.value.length === 0) return 0;
-  return paginationStart.value + employees.value.length - 1;
+  if (customers.value.length === 0) return 0;
+  return paginationStart.value + customers.value.length - 1;
 });
 
 const formatDate = (date) => {
@@ -1106,21 +955,6 @@ const getInitials = (name) => {
     .substring(0, 2);
 };
 
-const getRoleLabel = (role) => {
-  switch (parseInt(role)) {
-    case 0:
-      return "Manager";
-    case 1:
-      return "Cashier";
-    case 2:
-      return "Supplier";
-    case 3:
-      return "Customer";
-    default:
-      return "Unknown";
-  }
-};
-
 const getShortAddress = (address) => {
   if (!address) return "";
   const firstLine = address.split("\n")[0];
@@ -1129,9 +963,9 @@ const getShortAddress = (address) => {
 
 const openCreateModal = () => {
   isEditing.value = false;
-  currentEmployee.value = {
+  currentCustomer.value = {
     id: null,
-    role: 1,
+    role: 3,
     first_name: "",
     last_name: "",
     email: "",
@@ -1146,24 +980,24 @@ const openCreateModal = () => {
   isModalOpen.value = true;
 };
 
-const editEmployee = (employee) => {
+const editCustomer = (customer) => {
   isEditing.value = true;
-  currentEmployee.value = { ...employee };
-  currentEmployee.value.role = parseInt(currentEmployee.value.role);
-  currentEmployee.value.gender = parseInt(currentEmployee.value.gender);
+  currentCustomer.value = { ...customer };
+  currentCustomer.value.role = parseInt(currentCustomer.value.role);
+  currentCustomer.value.gender = parseInt(currentCustomer.value.gender);
   password.value = "";
   passwordConfirmation.value = "";
   isViewModalOpen.value = false;
   isModalOpen.value = true;
 };
 
-const viewEmployee = (employee) => {
-  currentEmployee.value = { ...employee };
+const viewCustomer = (customer) => {
+  currentCustomer.value = { ...customer };
   isViewModalOpen.value = true;
 };
 
-const confirmDelete = (employee) => {
-  currentEmployee.value = { ...employee };
+const confirmDelete = (customer) => {
+  currentCustomer.value = { ...customer };
   isDeleteModalOpen.value = true;
 };
 
@@ -1179,41 +1013,20 @@ const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
 };
 
-const addApiMethods = () => {
-  if (!apiService.createUser) {
-    apiService.createUser = (userData) => {
-      return apiService.post("/users", userData);
-    };
-  }
-
-  if (!apiService.updateUser) {
-    apiService.updateUser = (id, userData) => {
-      return apiService.put(`/users/${id}`, userData);
-    };
-  }
-
-  if (!apiService.deleteUser) {
-    apiService.deleteUser = (id) => {
-      return apiService.delete(`/users/${id}`);
-    };
-  }
-};
-
 watch(searchQuery, () => {
   currentPage.value = 1;
-  fetchEmployees();
+  fetchCustomers();
 });
 
 watch([sortBy, sortDirection], () => {
-  fetchEmployees();
+  fetchCustomers();
 });
 
 watch(currentPage, () => {
-  fetchEmployees();
+  fetchCustomers();
 });
 
 onMounted(() => {
-  addApiMethods();
-  fetchEmployees();
+  fetchCustomers();
 });
 </script>

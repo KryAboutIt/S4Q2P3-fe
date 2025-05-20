@@ -49,6 +49,12 @@ const routes = [
         name: 'configuration',
         component: () => import('../views/dashboard/ConfigurationView.vue'),
         meta: { title: 'Configuration' }
+      },
+      {
+        path: 'customers',
+        name: 'customer-management',
+        component: () => import('../views/dashboard/CustomersView.vue'),
+        meta: { title: 'Customer Management' }
       }
       // {
       //   path: 'profile',

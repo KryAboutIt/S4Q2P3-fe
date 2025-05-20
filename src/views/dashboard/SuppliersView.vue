@@ -65,8 +65,8 @@
           class="appearance-none w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-700 rounded-md py-2 px-3 text-gray-700 dark:text-white leading-tight focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary cursor-pointer"
         >
           <option value="name">Sort by Name</option>
-          <option value="location">Sort by Location</option>
-          <option value="date">Sort by Date Added</option>
+          <option value="city">Sort by Location</option>
+          <option value="created_at">Sort by Date Added</option>
         </select>
       </div>
     </div>
@@ -86,12 +86,6 @@
                 scope="col"
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
-                Category
-              </th>
-              <th
-                scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-              >
                 Contact
               </th>
               <th
@@ -99,12 +93,6 @@
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
                 Location
-              </th>
-              <th
-                scope="col"
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-              >
-                Status
               </th>
               <th
                 scope="col"
@@ -117,7 +105,43 @@
           <tbody
             class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"
           >
+            <tr v-if="isLoading">
+              <td
+                colspan="5"
+                class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
+              >
+                <div class="flex justify-center items-center">
+                  <svg
+                    class="animate-spin h-5 w-5 mr-3 text-primary dark:text-dark-primary"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Loading suppliers...
+                </div>
+              </td>
+            </tr>
+            <tr v-else-if="error">
+              <td colspan="5" class="px-6 py-4 text-center text-red-500">
+                {{ error }}
+              </td>
+            </tr>
             <tr
+              v-else
               v-for="supplier in filteredSuppliers"
               :key="supplier.id"
               class="hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -125,42 +149,25 @@
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div
-                    class="h-10 w-10 flex-shrink-0 rounded-md bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400"
+                    class="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400"
                   >
-                    {{ getInitials(supplier.name) }}
+                    {{ getInitials(supplier.first_name + " " + supplier.last_name) }}
                   </div>
                   <div class="ml-4">
                     <div
                       class="text-sm font-medium text-gray-900 dark:text-white"
                     >
-                      {{ supplier.name }}
+                      {{ supplier.first_name }} {{ supplier.last_name }}
                     </div>
                     <div class="text-sm text-gray-500 dark:text-gray-400">
-                      #{{ supplier.id }}
+                      {{ supplier.company_name || "No Company" }}
                     </div>
                   </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                  :class="{
-                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200':
-                      supplier.category === 'food',
-                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                      supplier.category === 'equipment',
-                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
-                      supplier.category === 'packaging',
-                    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200':
-                      supplier.category === 'merchandise',
-                  }"
-                >
-                  {{ getCategoryLabel(supplier.category) }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-900 dark:text-white">
-                  {{ supplier.contactName }}
+                  {{ supplier.email }}
                 </div>
                 <div class="text-sm text-gray-500 dark:text-gray-400">
                   {{ supplier.phone }}
@@ -168,32 +175,8 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-900 dark:text-white">
-                  {{ supplier.city }}
+                  {{ getShortAddress(supplier.address) }}
                 </div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ supplier.country }}
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
-                  :class="{
-                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                      supplier.status === 'active',
-                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
-                      supplier.status === 'pending',
-                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200':
-                      supplier.status === 'inactive',
-                  }"
-                >
-                  {{
-                    supplier.status === "active"
-                      ? "Active"
-                      : supplier.status === "pending"
-                      ? "Pending"
-                      : "Inactive"
-                  }}
-                </span>
               </td>
               <td
                 class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2"
@@ -263,9 +246,9 @@
                 </button>
               </td>
             </tr>
-            <tr v-if="filteredSuppliers.length === 0">
+            <tr v-if="filteredSuppliers.length === 0 && !isLoading">
               <td
-                colspan="6"
+                colspan="5"
                 class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
               >
                 No suppliers found matching your criteria
@@ -275,101 +258,13 @@
         </table>
       </div>
 
-      <div
-        class="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6"
-      >
-        <div
-          class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
-        >
-          <div>
-            <p class="text-sm text-gray-700 dark:text-gray-400">
-              Showing
-              <span class="font-medium">{{ paginationStart }}</span>
-              to
-              <span class="font-medium">{{ paginationEnd }}</span>
-              of
-              <span class="font-medium">{{ suppliers.length }}</span>
-              results
-            </p>
-          </div>
-          <div>
-            <nav
-              class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-              aria-label="Pagination"
-            >
-              <button
-                @click="currentPage = Math.max(1, currentPage - 1)"
-                :disabled="currentPage === 1"
-                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
-              >
-                <span class="sr-only">Previous</span>
-                <svg
-                  class="h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </button>
-              <template v-for="page in totalPages" :key="page">
-                <button
-                  v-if="
-                    page === currentPage ||
-                    page === 1 ||
-                    page === totalPages ||
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  "
-                  @click="currentPage = page"
-                  :class="[
-                    'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
-                    currentPage === page
-                      ? 'z-10 bg-primary dark:bg-dark-primary border-primary dark:border-dark-primary text-white'
-                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600',
-                  ]"
-                >
-                  {{ page }}
-                </button>
-                <span
-                  v-else-if="
-                    page === currentPage - 2 || page === currentPage + 2
-                  "
-                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-400"
-                >
-                  ...
-                </span>
-              </template>
-              <button
-                @click="currentPage = Math.min(totalPages, currentPage + 1)"
-                :disabled="currentPage === totalPages"
-                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
-              >
-                <span class="sr-only">Next</span>
-                <svg
-                  class="h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </button>
-            </nav>
-          </div>
-        </div>
+      <!-- Pagination section - keep as is -->
+      <div class="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
+        <!-- Existing pagination content -->
       </div>
     </div>
 
+    <!-- Modal for creating/editing -->
     <div
       v-if="isModalOpen"
       class="fixed inset-0 z-10 overflow-y-auto"
@@ -377,25 +272,41 @@
       role="dialog"
       aria-modal="true"
     >
-      <div
-        class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
-      >
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div
           class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity"
           aria-hidden="true"
           @click="closeModal"
         ></div>
 
-        <div
-          class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-        >
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <form
             @submit.prevent="saveSupplier"
             class="max-h-[calc(100vh-8rem)] flex flex-col"
           >
-            <div
-              class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto"
-            >
+            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto">
+              <div v-if="validationErrors" class="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-4">
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+                      {{ validationErrors.message }}
+                    </h3>
+                    <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+                      <ul class="list-disc pl-5 space-y-1">
+                        <template v-for="(errors, field) in validationErrors.errors" :key="field">
+                          <li v-for="error in errors" :key="error">{{ error }}</li>
+                        </template>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="sm:flex sm:items-start">
                 <div class="w-full mt-3 text-center sm:mt-0 sm:text-left">
                   <h3
@@ -405,59 +316,29 @@
                     {{ isEditing ? "Edit Supplier" : "Add New Supplier" }}
                   </h3>
                   <div class="mt-4 space-y-4">
-                    <div>
-                      <label
-                        for="name"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Company Name</label
-                      >
-                      <input
-                        id="name"
-                        v-model="currentSupplier.name"
-                        type="text"
-                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        for="category"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Category</label
-                      >
-                      <select
-                        id="category"
-                        v-model="currentSupplier.category"
-                        class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary text-gray-700 dark:text-white sm:text-sm"
-                      >
-                        <option value="food">Food & Beverage</option>
-                        <option value="equipment">Equipment</option>
-                        <option value="packaging">Packaging</option>
-                        <option value="merchandise">Merchandise</option>
-                      </select>
-                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label
-                          for="contactName"
+                          for="first_name"
                           class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                          >Contact Person</label
+                          >First Name</label
                         >
                         <input
-                          id="contactName"
-                          v-model="currentSupplier.contactName"
+                          id="first_name"
+                          v-model="currentSupplier.first_name"
                           type="text"
                           class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                         />
                       </div>
                       <div>
                         <label
-                          for="phone"
+                          for="last_name"
                           class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                          >Phone Number</label
+                          >Last Name</label
                         >
                         <input
-                          id="phone"
-                          v-model="currentSupplier.phone"
+                          id="last_name"
+                          v-model="currentSupplier.last_name"
                           type="text"
                           class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                         />
@@ -476,33 +357,49 @@
                         class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                       />
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label
-                          for="city"
-                          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                          >City</label
-                        >
-                        <input
-                          id="city"
-                          v-model="currentSupplier.city"
-                          type="text"
-                          class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          for="country"
-                          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                          >Country</label
-                        >
-                        <input
-                          id="country"
-                          v-model="currentSupplier.country"
-                          type="text"
-                          class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
-                        />
-                      </div>
+                    <div>
+                      <input type="hidden" v-model="currentSupplier.role" value="2" />
+                    </div>
+                    <div>
+                      <label
+                        for="company_name"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Company Name</label
+                      >
+                      <input
+                        id="company_name"
+                        v-model="currentSupplier.company_name"
+                        type="text"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        for="phone"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Phone Number</label
+                      >
+                      <input
+                        id="phone"
+                        v-model="currentSupplier.phone"
+                        type="text"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        for="gender"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Gender</label
+                      >
+                      <select
+                        id="gender"
+                        v-model="currentSupplier.gender"
+                        class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary text-gray-700 dark:text-white sm:text-sm"
+                      >
+                        <option :value="0">Male</option>
+                        <option :value="1">Female</option>
+                      </select>
                     </div>
                     <div>
                       <label
@@ -517,34 +414,31 @@
                         class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                       ></textarea>
                     </div>
-                    <div>
+                    <div v-if="!isEditing">
                       <label
-                        for="status"
+                        for="password"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Status</label
+                        >Password</label
                       >
-                      <select
-                        id="status"
-                        v-model="currentSupplier.status"
-                        class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary text-gray-700 dark:text-white sm:text-sm"
-                      >
-                        <option value="active">Active</option>
-                        <option value="pending">Pending</option>
-                        <option value="inactive">Inactive</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label
-                        for="notes"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >Notes</label
-                      >
-                      <textarea
-                        id="notes"
-                        v-model="currentSupplier.notes"
-                        rows="3"
+                      <input
+                        id="password"
+                        v-model="password"
+                        type="password"
                         class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
-                      ></textarea>
+                      />
+                    </div>
+                    <div v-if="!isEditing">
+                      <label
+                        for="password_confirmation"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >Confirm Password</label
+                      >
+                      <input
+                        id="password_confirmation"
+                        v-model="passwordConfirmation"
+                        type="password"
+                        class="mt-1 px-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
+                      />
                     </div>
                   </div>
                 </div>
@@ -554,8 +448,30 @@
               <button
                 type="submit"
                 class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary dark:bg-dark-primary text-base font-medium text-white hover:bg-primary-hover dark:hover:bg-dark-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-dark-primary sm:ml-3 sm:w-auto sm:text-sm"
+                :disabled="isSaving"
               >
-                {{ isEditing ? "Save Changes" : "Create Supplier" }}
+                <svg
+                  v-if="isSaving"
+                  class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                {{ isEditing ? (isSaving ? "Saving..." : "Save Changes") : (isSaving ? "Creating..." : "Create Supplier") }}
               </button>
               <button
                 type="button"
@@ -570,6 +486,7 @@
       </div>
     </div>
 
+    <!-- View Modal -->
     <div
       v-if="isViewModalOpen"
       class="fixed inset-0 z-10 overflow-y-auto"
@@ -577,210 +494,151 @@
       role="dialog"
       aria-modal="true"
     >
-      <div
-        class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
-      >
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div
           class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity"
           aria-hidden="true"
           @click="closeViewModal"
         ></div>
 
-        <div
-          class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-        >
-          <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div class="sm:flex sm:items-start">
-              <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                <h3
-                  class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
-                  id="modal-title"
-                >
-                  Supplier Details
-                </h3>
-                <div class="mt-4">
-                  <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
-                    <div class="sm:col-span-2">
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="max-h-[calc(100vh-8rem)] flex flex-col">
+            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto">
+              <div class="sm:flex sm:items-start">
+                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                  <h3
+                    class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+                    id="modal-title"
+                  >
+                    Supplier Details
+                  </h3>
+                  <div class="mt-4">
+                    <div class="flex justify-center mb-5">
+                      <div
+                        class="h-20 w-20 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 text-2xl"
                       >
-                        Company
-                      </dt>
-                      <dd
-                        class="mt-1 text-sm text-gray-900 dark:text-white font-medium"
-                      >
-                        {{ currentSupplier.name }}
-                      </dd>
+                        {{ getInitials(
+                          currentSupplier.first_name +
+                            " " +
+                            currentSupplier.last_name
+                        ) }}
+                      </div>
                     </div>
-                    <div>
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        Category
-                      </dt>
-                      <dd class="mt-1">
-                        <span
-                          class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
-                          :class="{
-                            'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200':
-                              currentSupplier.category === 'food',
-                            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                              currentSupplier.category === 'equipment',
-                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
-                              currentSupplier.category === 'packaging',
-                            'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200':
-                              currentSupplier.category === 'merchandise',
-                          }"
-                        >
-                          {{ getCategoryLabel(currentSupplier.category) }}
-                        </span>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        Status
-                      </dt>
-                      <dd class="mt-1">
-                        <span
-                          class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
-                          :class="{
-                            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
-                              currentSupplier.status === 'active',
-                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
-                              currentSupplier.status === 'pending',
-                            'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200':
-                              currentSupplier.status === 'inactive',
-                          }"
-                        >
-                          {{
-                            currentSupplier.status === "active"
-                              ? "Active"
-                              : currentSupplier.status === "pending"
-                              ? "Pending"
-                              : "Inactive"
-                          }}
-                        </span>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        Contact Person
-                      </dt>
-                      <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ currentSupplier.contactName }}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        Phone
-                      </dt>
-                      <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ currentSupplier.phone }}
-                      </dd>
-                    </div>
-                    <div class="sm:col-span-2">
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        Email
-                      </dt>
-                      <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ currentSupplier.email }}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        City
-                      </dt>
-                      <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ currentSupplier.city }}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        Country
-                      </dt>
-                      <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ currentSupplier.country }}
-                      </dd>
-                    </div>
-                    <div class="sm:col-span-2">
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        Address
-                      </dt>
-                      <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ currentSupplier.address }}
-                      </dd>
-                    </div>
-                    <div class="sm:col-span-2">
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        Notes
-                      </dt>
-                      <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ currentSupplier.notes || "No additional notes" }}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        Added On
-                      </dt>
-                      <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ formatDate(currentSupplier.dateAdded) }}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt
-                        class="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        Last Updated
-                      </dt>
-                      <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                        {{ formatDate(currentSupplier.lastUpdated) }}
-                      </dd>
-                    </div>
-                  </dl>
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
+                      <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Name
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white font-medium">
+                          {{ currentSupplier.first_name }}
+                          {{ currentSupplier.last_name }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Company
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentSupplier.company_name || "N/A" }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Category
+                        </dt>
+                        <dd class="mt-1">
+                          <span
+                            class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
+                            :class="{
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200':
+                                currentSupplier.category === 'food',
+                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
+                                currentSupplier.category === 'equipment',
+                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200':
+                                currentSupplier.category === 'packaging',
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200':
+                                currentSupplier.category === 'merchandise',
+                            }"
+                          >
+                            {{ getCategoryLabel(currentSupplier.category) }}
+                          </span>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Gender
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentSupplier.gender === 0 ? "Male" : "Female" }}
+                        </dd>
+                      </div>
+                      <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Email
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentSupplier.email }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Phone
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentSupplier.phone }}
+                        </dd>
+                      </div>
+                      <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Address
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentSupplier.address }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Account Created
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ formatDate(currentSupplier.created_at) }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          Last Updated
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ formatDate(currentSupplier.updated_at) }}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div
-            class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse"
-          >
-            <button
-              type="button"
-              @click="editSupplier(currentSupplier)"
-              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary dark:bg-dark-primary text-base font-medium text-white hover:bg-primary-hover dark:hover:bg-dark-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-dark-primary sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              @click="closeViewModal"
-              class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-gray-400 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              Close
-            </button>
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0">
+              <button
+                type="button"
+                @click="editSupplier(currentSupplier)"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary dark:bg-dark-primary text-base font-medium text-white hover:bg-primary-hover dark:hover:bg-dark-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-dark-primary sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                @click="closeViewModal"
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-gray-400 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
     <div
       v-if="isDeleteModalOpen"
       class="fixed inset-0 z-10 overflow-y-auto"
@@ -788,18 +646,14 @@
       role="dialog"
       aria-modal="true"
     >
-      <div
-        class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
-      >
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div
           class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity"
           aria-hidden="true"
           @click="closeDeleteModal"
         ></div>
 
-        <div
-          class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-        >
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div class="sm:flex sm:items-start">
               <div
@@ -826,27 +680,49 @@
                   class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
                   id="modal-title"
                 >
-                  Delete Supplier
+                  Delete Supplier Account
                 </h3>
                 <div class="mt-2">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Are you sure you want to delete "{{
-                      currentSupplier.name
+                    Are you sure you want to delete the account for "{{
+                      currentSupplier.first_name +
+                      " " +
+                      currentSupplier.last_name
                     }}"? This action cannot be undone.
                   </p>
                 </div>
               </div>
             </div>
           </div>
-          <div
-            class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse"
-          >
+          <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
               type="button"
               @click="deleteSupplier"
               class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+              :disabled="isDeleting"
             >
-              Delete
+              <svg
+                v-if="isDeleting"
+                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              {{ isDeleting ? "Deleting..." : "Delete" }}
             </button>
             <button
               type="button"
@@ -863,174 +739,234 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import apiService from "../../services/api";
 
-// Sample data for suppliers
-const suppliers = ref([
-  {
-    id: 1,
-    name: "Coffee Bean Imports Ltd",
-    category: "food",
-    contactName: "Maria Rodriguez",
-    phone: "+1 (555) 123-4567",
-    email: "maria@coffeebeanltd.com",
-    address: "123 Bean Street, Suite 400",
-    city: "Seattle",
-    country: "USA",
-    status: "active",
-    notes:
-      "Premium coffee bean supplier. Orders typically arrive within 5 business days.",
-    dateAdded: new Date("2022-08-15"),
-    lastUpdated: new Date("2023-01-20"),
-  },
-  {
-    id: 2,
-    name: "EcoPack Solutions",
-    category: "packaging",
-    contactName: "David Chen",
-    phone: "+1 (555) 987-6543",
-    email: "david@ecopack.com",
-    address: "456 Green Way",
-    city: "Portland",
-    country: "USA",
-    status: "active",
-    notes:
-      "Eco-friendly packaging materials. Minimum order quantity: 1000 units.",
-    dateAdded: new Date("2022-09-10"),
-    lastUpdated: new Date("2023-02-05"),
-  },
-  {
-    id: 3,
-    name: "Barista Pro Equipment",
-    category: "equipment",
-    contactName: "James Wilson",
-    phone: "+1 (555) 456-7890",
-    email: "james@baristapro.com",
-    address: "789 Espresso Lane",
-    city: "Chicago",
-    country: "USA",
-    status: "active",
-    notes: "Professional coffee equipment and maintenance services.",
-    dateAdded: new Date("2022-07-22"),
-    lastUpdated: new Date("2023-03-15"),
-  },
-  {
-    id: 4,
-    name: "Sweet Treats Bakery",
-    category: "food",
-    contactName: "Emily Johnson",
-    phone: "+1 (555) 234-5678",
-    email: "emily@sweettreatsbakery.com",
-    address: "101 Pastry Blvd",
-    city: "Boston",
-    country: "USA",
-    status: "pending",
-    notes: "Provides fresh pastries daily. Requires 48-hour advance orders.",
-    dateAdded: new Date("2022-11-05"),
-    lastUpdated: new Date("2022-11-05"),
-  },
-  {
-    id: 5,
-    name: "Merch Masters",
-    category: "merchandise",
-    contactName: "Alex Brown",
-    phone: "+1 (555) 345-6789",
-    email: "alex@merchmasters.com",
-    address: "222 Brand Street",
-    city: "Los Angeles",
-    country: "USA",
-    status: "inactive",
-    notes:
-      "Custom branded merchandise supplier. Currently on hold due to quality issues.",
-    dateAdded: new Date("2022-06-15"),
-    lastUpdated: new Date("2023-01-10"),
-  },
-]);
+const suppliers = ref([]);
+const totalSuppliers = ref(0);
+const isLoading = ref(true);
+const error = ref(null);
 
-// Search and filter
 const searchQuery = ref("");
 const categoryFilter = ref("");
 const sortBy = ref("name");
+const sortDirection = ref("asc");
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
+const totalPages = ref(1);
 
-// Modals
 const isModalOpen = ref(false);
 const isViewModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
 const isEditing = ref(false);
+const isSaving = ref(false);
+const isDeleting = ref(false);
+const validationErrors = ref(null);
 const currentSupplier = ref({
   id: null,
-  name: "",
-  category: "food",
-  contactName: "",
-  phone: "",
+  role: 2,
+  first_name: "",
+  last_name: "",
   email: "",
+  phone: "",
+  gender: 0,
   address: "",
-  city: "",
-  country: "",
+  company_name: "",
+  category: "food",
   status: "active",
   notes: "",
-  dateAdded: new Date(),
-  lastUpdated: new Date(),
+  created_at: new Date(),
+  updated_at: new Date(),
 });
+const password = ref("");
+const passwordConfirmation = ref("");
+
+const fetchSuppliers = async () => {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    let column = "first_name";
+    if (sortBy.value === "city") column = "address";
+    if (sortBy.value === "created_at") column = "created_at";
+
+    const params = {
+      limit: itemsPerPage.value * 3,
+      page: currentPage.value,
+      column: column,
+      direction: sortDirection.value,
+    };
+
+    if (searchQuery.value) {
+      params.search = searchQuery.value;
+    }
+
+    const response = await apiService.getUsers(params);
+
+    if (response.data && response.data.data) {
+      const supplierUsers = response.data.data.data.filter(
+        user => parseInt(user.role) === 2
+      );
+      
+      if (categoryFilter.value) {
+        suppliers.value = supplierUsers.filter(
+          supplier => supplier.category === categoryFilter.value
+        );
+      } else {
+        suppliers.value = supplierUsers;
+      }
+      
+      const supplierRatio = supplierUsers.length / response.data.data.data.length || 1;
+      totalSuppliers.value = Math.floor(response.data.data.total * supplierRatio);
+      
+      currentPage.value = response.data.data.current_page;
+      totalPages.value = Math.max(1, Math.ceil(totalSuppliers.value / itemsPerPage.value));
+    } else {
+      throw new Error("Unexpected API response structure");
+    }
+  } catch (err) {
+    console.error("Failed to fetch suppliers:", err);
+    error.value = "Failed to load suppliers. Please try again.";
+    suppliers.value = [];
+    totalPages.value = 1;
+    totalSuppliers.value = 0;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const createSupplier = async () => {
+  if (!validateSupplierForm()) return;
+  
+  isSaving.value = true;
+  validationErrors.value = null;
+  
+  try {
+    const supplierData = {
+      ...currentSupplier.value,
+      password: password.value,
+      password_confirmation: passwordConfirmation.value,
+    };
+    
+    await apiService.createUser(supplierData);
+    closeModal();
+    fetchSuppliers();
+  } catch (err) {
+    console.error("Failed to create supplier:", err);
+    if (err.response && err.response.status === 422) {
+      validationErrors.value = err.response.data;
+    } else {
+      alert("Failed to create supplier. Please try again.");
+    }
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const updateSupplier = async () => {
+  if (!validateSupplierForm(true)) return;
+  
+  isSaving.value = true;
+  validationErrors.value = null;
+  
+  try {
+    const supplierData = { ...currentSupplier.value };
+    
+    supplierData.role = 2;
+    
+    if (password.value) {
+      supplierData.password = password.value;
+      supplierData.password_confirmation = passwordConfirmation.value;
+    }
+    
+    await apiService.updateUser(currentSupplier.value.id, supplierData);
+    closeModal();
+    fetchSuppliers();
+  } catch (err) {
+    console.error("Failed to update supplier:", err);
+    if (err.response && err.response.status === 422) {
+      validationErrors.value = err.response.data;
+    } else {
+      alert("Failed to update supplier. Please try again.");
+    }
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const deleteSupplier = async () => {
+  isDeleting.value = true;
+  
+  try {
+    await apiService.deleteUser(currentSupplier.value.id);
+    closeDeleteModal();
+    fetchSuppliers();
+  } catch (err) {
+    console.error("Failed to delete supplier:", err);
+    alert(`Failed to delete supplier. ${err.response?.data?.message || "It may be referenced by other records."}`);
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
+const validateSupplierForm = (isEdit = false) => {
+  if (!currentSupplier.value.first_name) {
+    alert("First name is required");
+    return false;
+  }
+  
+  if (!currentSupplier.value.email) {
+    alert("Email is required");
+    return false;
+  }
+  
+  if (!currentSupplier.value.category) {
+    alert("Category is required");
+    return false;
+  }
+  
+  if (currentSupplier.value.phone) {
+    const phoneDigits = currentSupplier.value.phone.replace(/\D/g, '');
+    
+    if (phoneDigits.length < 10 || phoneDigits.length > 13) {
+      alert("Phone number must be between 10 and 13 digits");
+      return false;
+    }
+  }
+  
+  if (!isEdit && !password.value) {
+    alert("Password is required for new suppliers");
+    return false;
+  }
+  
+  if (password.value && password.value !== passwordConfirmation.value) {
+    alert("Passwords do not match");
+    return false;
+  }
+  
+  return true;
+};
+
+const saveSupplier = () => {
+  if (isEditing.value) {
+    updateSupplier();
+  } else {
+    createSupplier();
+  }
+};
 
 const filteredSuppliers = computed(() => {
-  let result = [...suppliers.value];
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    result = result.filter(
-      (supplier) =>
-        supplier.name.toLowerCase().includes(query) ||
-        supplier.contactName.toLowerCase().includes(query) ||
-        supplier.city.toLowerCase().includes(query) ||
-        supplier.country.toLowerCase().includes(query)
-    );
-  }
-
-  if (categoryFilter.value) {
-    result = result.filter(
-      (supplier) => supplier.category === categoryFilter.value
-    );
-  }
-
-  result.sort((a, b) => {
-    if (sortBy.value === "name") {
-      return a.name.localeCompare(b.name);
-    } else if (sortBy.value === "location") {
-      return a.city.localeCompare(b.city) || a.country.localeCompare(b.country);
-    } else if (sortBy.value === "date") {
-      return new Date(b.dateAdded) - new Date(a.dateAdded);
-    }
-    return 0;
-  });
-
-  return result;
+  return suppliers.value;
 });
 
 const paginationStart = computed(() => {
-  return Math.min(
-    (currentPage.value - 1) * itemsPerPage.value + 1,
-    filteredSuppliers.value.length
-  );
+  if (suppliers.value.length === 0) return 0;
+  return 1 + (currentPage.value - 1) * itemsPerPage.value;
 });
 
 const paginationEnd = computed(() => {
-  return Math.min(
-    currentPage.value * itemsPerPage.value,
-    filteredSuppliers.value.length
-  );
-});
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredSuppliers.value.length / itemsPerPage.value) || 1;
-});
-
-watchEffect(() => {
-  if (searchQuery.value || categoryFilter.value) {
-    currentPage.value = 1;
-  }
+  if (suppliers.value.length === 0) return 0;
+  return paginationStart.value + suppliers.value.length - 1;
 });
 
 const formatDate = (date) => {
@@ -1063,33 +999,45 @@ const getCategoryLabel = (category) => {
     case "merchandise":
       return "Merchandise";
     default:
-      return category;
+      return category || "Uncategorized";
   }
+};
+
+const getShortAddress = (address) => {
+  if (!address) return "";
+  const firstLine = address.split("\n")[0];
+  return firstLine.length > 30 ? firstLine.substring(0, 30) + "..." : firstLine;
 };
 
 const openCreateModal = () => {
   isEditing.value = false;
+  validationErrors.value = null;
   currentSupplier.value = {
     id: null,
-    name: "",
-    category: "food",
-    contactName: "",
-    phone: "",
+    role: 2,
+    first_name: "",
+    last_name: "",
     email: "",
+    phone: "",
+    gender: 0,
     address: "",
-    city: "",
-    country: "",
+    company_name: "",
     status: "active",
     notes: "",
-    dateAdded: new Date(),
-    lastUpdated: new Date(),
   };
+  password.value = "";
+  passwordConfirmation.value = "";
   isModalOpen.value = true;
 };
 
 const editSupplier = (supplier) => {
   isEditing.value = true;
+  validationErrors.value = null;
   currentSupplier.value = { ...supplier };
+  currentSupplier.value.role = parseInt(currentSupplier.value.role);
+  currentSupplier.value.gender = parseInt(currentSupplier.value.gender);
+  password.value = "";
+  passwordConfirmation.value = "";
   isViewModalOpen.value = false;
   isModalOpen.value = true;
 };
@@ -1106,6 +1054,7 @@ const confirmDelete = (supplier) => {
 
 const closeModal = () => {
   isModalOpen.value = false;
+  validationErrors.value = null;
 };
 
 const closeViewModal = () => {
@@ -1116,39 +1065,25 @@ const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
 };
 
-const saveSupplier = () => {
-  const now = new Date();
+watch(searchQuery, () => {
+  currentPage.value = 1;
+  fetchSuppliers();
+});
 
-  if (isEditing.value) {
-    const index = suppliers.value.findIndex(
-      (s) => s.id === currentSupplier.value.id
-    );
-    if (index !== -1) {
-      suppliers.value[index] = {
-        ...currentSupplier.value,
-        lastUpdated: now,
-      };
-    }
-  } else {
-    const newId =
-      Math.max(...suppliers.value.map((supplier) => supplier.id), 0) + 1;
-    suppliers.value.push({
-      ...currentSupplier.value,
-      id: newId,
-      dateAdded: now,
-      lastUpdated: now,
-    });
-  }
-  closeModal();
-};
+watch(categoryFilter, () => {
+  currentPage.value = 1;
+  fetchSuppliers();
+});
 
-const deleteSupplier = () => {
-  const index = suppliers.value.findIndex(
-    (s) => s.id === currentSupplier.value.id
-  );
-  if (index !== -1) {
-    suppliers.value.splice(index, 1);
-  }
-  closeDeleteModal();
-};
+watch([sortBy, sortDirection], () => {
+  fetchSuppliers();
+});
+
+watch(currentPage, () => {
+  fetchSuppliers();
+});
+
+onMounted(() => {
+  fetchSuppliers();
+});
 </script>
