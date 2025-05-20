@@ -57,8 +57,7 @@
           <option value="">All Roles</option>
           <option value="0">Manager</option>
           <option value="1">Cashier</option>
-          <option value="2">Staff</option>
-          <option value="3">Customer</option>
+          <option value="2">Supplier</option>
         </select>
         <select
           v-model="sortBy"
@@ -111,7 +110,51 @@
           <tbody
             class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"
           >
+            <tr v-if="isLoading">
+              <td
+                colspan="5"
+                class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
+              >
+                <div class="flex justify-center items-center">
+                  <svg
+                    class="animate-spin h-5 w-5 mr-3 text-primary dark:text-dark-primary"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Loading employees...
+                </div>
+              </td>
+            </tr>
+            <tr v-else-if="error">
+              <td colspan="5" class="px-6 py-4 text-center text-red-500">
+                {{ error }}
+              </td>
+            </tr>
+            <tr v-else-if="filteredEmployees.length === 0 && !isLoading">
+              <td
+                colspan="5"
+                class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
+              >
+                No employees found matching your criteria
+              </td>
+            </tr>
             <tr
+              v-else
               v-for="employee in filteredEmployees"
               :key="employee.id"
               class="hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -121,7 +164,11 @@
                   <div
                     class="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400"
                   >
-                    {{ getInitials(employee.first_name + " " + employee.last_name) }}
+                    {{
+                      getInitials(
+                        employee.first_name + " " + employee.last_name
+                      )
+                    }}
                   </div>
                   <div class="ml-4">
                     <div
@@ -139,10 +186,14 @@
                 <span
                   class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
                   :class="{
-                    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200': employee.role === 0,
-                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': employee.role === 1,
-                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': employee.role === 2,
-                    'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200': employee.role === 3
+                    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200':
+                      employee.role === 0,
+                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200':
+                      employee.role === 1,
+                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
+                      employee.role === 2,
+                    'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200':
+                      employee.role === 3,
                   }"
                 >
                   {{ getRoleLabel(employee.role) }}
@@ -229,14 +280,6 @@
                 </button>
               </td>
             </tr>
-            <tr v-if="filteredEmployees.length === 0">
-              <td
-                colspan="5"
-                class="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
-              >
-                No employees found matching your criteria
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -254,7 +297,7 @@
               to
               <span class="font-medium">{{ paginationEnd }}</span>
               of
-              <span class="font-medium">{{ employees.length }}</span>
+              <span class="font-medium">{{ totalEmployees }}</span>
               results
             </p>
           </div>
@@ -265,7 +308,7 @@
             >
               <button
                 @click="currentPage = Math.max(1, currentPage - 1)"
-                :disabled="currentPage === 1"
+                :disabled="currentPage === 1 || isLoading"
                 class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
               >
                 <span class="sr-only">Previous</span>
@@ -292,6 +335,7 @@
                     (page >= currentPage - 1 && page <= currentPage + 1)
                   "
                   @click="currentPage = page"
+                  :disabled="isLoading"
                   :class="[
                     'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
                     currentPage === page
@@ -312,7 +356,7 @@
               </template>
               <button
                 @click="currentPage = Math.min(totalPages, currentPage + 1)"
-                :disabled="currentPage === totalPages"
+                :disabled="currentPage === totalPages || isLoading"
                 class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
               >
                 <span class="sr-only">Next</span>
@@ -425,8 +469,7 @@
                       >
                         <option value="0">Manager</option>
                         <option value="1">Cashier</option>
-                        <option value="2">Staff</option>
-                        <option value="3">Customer</option>
+                        <option value="2">Supplier</option>
                       </select>
                     </div>
                     <div>
@@ -513,12 +556,44 @@
                 </div>
               </div>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0">
+            <div
+              class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0"
+            >
               <button
                 type="submit"
                 class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary dark:bg-dark-primary text-base font-medium text-white hover:bg-primary-hover dark:hover:bg-dark-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-dark-primary sm:ml-3 sm:w-auto sm:text-sm"
+                :disabled="isSaving"
               >
-                {{ isEditing ? "Save Changes" : "Create Employee" }}
+                <svg
+                  v-if="isSaving"
+                  class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                {{
+                  isEditing
+                    ? isSaving
+                      ? "Saving..."
+                      : "Save Changes"
+                    : isSaving
+                    ? "Creating..."
+                    : "Create Employee"
+                }}
               </button>
               <button
                 type="button"
@@ -553,7 +628,9 @@
           class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
         >
           <div class="max-h-[calc(100vh-8rem)] flex flex-col">
-            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto">
+            <div
+              class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 overflow-y-auto"
+            >
               <div class="sm:flex sm:items-start">
                 <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
                   <h3
@@ -567,26 +644,47 @@
                       <div
                         class="h-20 w-20 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 text-2xl"
                       >
-                        {{ getInitials(currentEmployee.first_name + " " + currentEmployee.last_name) }}
+                        {{
+                          getInitials(
+                            currentEmployee.first_name +
+                              " " +
+                              currentEmployee.last_name
+                          )
+                        }}
                       </div>
                     </div>
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                       <div class="sm:col-span-2">
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Name</dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white font-medium">
-                          {{ currentEmployee.first_name }} {{ currentEmployee.last_name }}
+                        <dt
+                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
+                          Name
+                        </dt>
+                        <dd
+                          class="mt-1 text-sm text-gray-900 dark:text-white font-medium"
+                        >
+                          {{ currentEmployee.first_name }}
+                          {{ currentEmployee.last_name }}
                         </dd>
                       </div>
                       <div>
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Role</dt>
+                        <dt
+                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
+                          Role
+                        </dt>
                         <dd class="mt-1">
                           <span
                             class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full"
                             :class="{
-                              'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200': currentEmployee.role === 0,
-                              'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': currentEmployee.role === 1,
-                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': currentEmployee.role === 2,
-                              'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200': currentEmployee.role === 3
+                              'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200':
+                                currentEmployee.role === 0,
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200':
+                                currentEmployee.role === 1,
+                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200':
+                                currentEmployee.role === 2,
+                              'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200':
+                                currentEmployee.role === 3,
                             }"
                           >
                             {{ getRoleLabel(currentEmployee.role) }}
@@ -594,47 +692,93 @@
                         </dd>
                       </div>
                       <div>
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Gender</dt>
+                        <dt
+                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
+                          Gender
+                        </dt>
                         <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                          {{ currentEmployee.gender === 0 ? 'Male' : 'Female' }}
+                          {{ currentEmployee.gender === 0 ? "Male" : "Female" }}
                         </dd>
                       </div>
                       <div class="sm:col-span-2">
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Email</dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ currentEmployee.email }}</dd>
+                        <dt
+                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
+                          Email
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentEmployee.email }}
+                        </dd>
                       </div>
                       <div>
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ currentEmployee.phone }}</dd>
+                        <dt
+                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
+                          Phone
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentEmployee.phone }}
+                        </dd>
                       </div>
                       <div>
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Company</dt>
+                        <dt
+                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
+                          Company
+                        </dt>
                         <dd class="mt-1 text-sm text-gray-900 dark:text-white">
                           {{ currentEmployee.company_name || "N/A" }}
                         </dd>
                       </div>
                       <div class="sm:col-span-2">
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Address</dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ currentEmployee.address }}</dd>
+                        <dt
+                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
+                          Address
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentEmployee.address }}
+                        </dd>
                       </div>
                       <div>
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Account Created</dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ formatDate(currentEmployee.created_at) }}</dd>
+                        <dt
+                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
+                          Account Created
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ formatDate(currentEmployee.created_at) }}
+                        </dd>
                       </div>
                       <div>
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ formatDate(currentEmployee.updated_at) }}</dd>
+                        <dt
+                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
+                          Last Updated
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ formatDate(currentEmployee.updated_at) }}
+                        </dd>
                       </div>
                       <div v-if="currentEmployee.role === 3">
-                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Points</dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ currentEmployee.point }}</dd>
+                        <dt
+                          class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                        >
+                          Points
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                          {{ currentEmployee.point }}
+                        </dd>
                       </div>
                     </dl>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0">
+            <div
+              class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse flex-shrink-0"
+            >
               <button
                 type="button"
                 @click="editEmployee(currentEmployee)"
@@ -705,7 +849,9 @@
                 <div class="mt-2">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     Are you sure you want to delete the account for "{{
-                      currentEmployee.first_name + " " + currentEmployee.last_name
+                      currentEmployee.first_name +
+                      " " +
+                      currentEmployee.last_name
                     }}"? This action cannot be undone.
                   </p>
                 </div>
@@ -719,8 +865,30 @@
               type="button"
               @click="deleteEmployee"
               class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+              :disabled="isDeleting"
             >
-              Delete
+              <svg
+                v-if="isDeleting"
+                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              {{ isDeleting ? "Deleting..." : "Delete" }}
             </button>
             <button
               type="button"
@@ -737,82 +905,28 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import apiService from "../../services/api";
 
-// sample data
-const employees = ref([
-  {
-    id: 1,
-    role: 0,
-    first_name: "Noemi",
-    last_name: "Herzog",
-    email: "m@e.x",
-    phone: "02 069-8856-040",
-    gender: 0,
-    address: "51854 Goodwin Mission Suite 866\nLaurianeberg, FL 58093-4405",
-    email_verified_at: "2025-05-17T11:58:31.000000Z",
-    point: 444,
-    company_name: "Little PLC",
-    created_at: "2025-05-17T11:58:31.000000Z",
-    updated_at: "2025-05-17T11:58:31.000000Z"
-  },
-  {
-    id: 2,
-    role: 1,
-    first_name: "Autumn",
-    last_name: "Robel",
-    email: "ca@e.x",
-    phone: "2 055-4710-618",
-    gender: 1,
-    address: "2062 Elenor Gateway\nEast Brendonville, NJ 06586",
-    email_verified_at: "2025-05-17T11:58:31.000000Z",
-    point: 396,
-    company_name: "Erdman, Orn and Mitchell",
-    created_at: "2025-05-17T11:58:31.000000Z",
-    updated_at: "2025-05-17T11:58:31.000000Z"
-  },
-  {
-    id: 3,
-    role: 2,
-    first_name: "Misael",
-    last_name: "Crooks",
-    email: "s@e.x",
-    phone: "5 725-3075-651",
-    gender: 0,
-    address: "72969 Muller Circle Apt. 791\nNorth Daneton, AK 99560-2136",
-    email_verified_at: "2025-05-17T11:58:31.000000Z",
-    point: 471,
-    company_name: "Reynolds PLC",
-    created_at: "2025-05-17T11:58:31.000000Z",
-    updated_at: "2025-05-17T11:58:31.000000Z"
-  },
-  {
-    id: 4,
-    role: 3,
-    first_name: "Justine",
-    last_name: "Parker",
-    email: "cu@e.x",
-    phone: "8 657-9992-855",
-    gender: 1,
-    address: "4944 Abigail Spur\nNew Jammie, VT 46482-6452",
-    email_verified_at: "2025-05-17T11:58:31.000000Z",
-    point: 893,
-    company_name: "Bauch LLC",
-    created_at: "2025-05-17T11:58:31.000000Z",
-    updated_at: "2025-05-17T11:58:31.000000Z"
-  }
-]);
+const employees = ref([]);
+const totalEmployees = ref(0);
+const isLoading = ref(true);
+const error = ref(null);
 
 const searchQuery = ref("");
 const roleFilter = ref("");
 const sortBy = ref("name");
+const sortDirection = ref("asc");
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
+const totalPages = ref(1);
 
 const isModalOpen = ref(false);
 const isViewModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
 const isEditing = ref(false);
+const isSaving = ref(false);
+const isDeleting = ref(false);
 const currentEmployee = ref({
   id: null,
   role: 2,
@@ -830,95 +944,237 @@ const currentEmployee = ref({
 const password = ref("");
 const passwordConfirmation = ref("");
 
-const filteredEmployees = computed(() => {
-  let result = [...employees.value];
+const fetchEmployees = async () => {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    let column = "first_name";
+    if (sortBy.value === "role") column = "role";
+    if (sortBy.value === "date") column = "created_at";
+
+    const params = {
+      limit: itemsPerPage.value,
+      page: currentPage.value,
+      column: column,
+      direction: sortDirection.value,
+    };
+
+    if (searchQuery.value) {
+      params.search = searchQuery.value;
+    }
+
+    if (roleFilter.value !== "") {
+      params.role = roleFilter.value;
+    }
+
+    const response = await apiService.getUsers(params);
+
+    if (response.data && response.data.data) {
+      const nonCustomerEmployees = response.data.data.data.filter(
+        employee => parseInt(employee.role) !== 3
+      );
+      
+      employees.value = nonCustomerEmployees;
+      
+      if (currentPage.value === 1) {
+        const ratio = nonCustomerEmployees.length / response.data.data.data.length;
+        totalEmployees.value = Math.floor(response.data.data.total * ratio);
+        
+        if (totalEmployees.value < nonCustomerEmployees.length) {
+          totalEmployees.value = nonCustomerEmployees.length;
+        }
+      }
+      
+      if (currentPage.value > 1 && nonCustomerEmployees.length < itemsPerPage.value) {
+        totalEmployees.value = (currentPage.value - 1) * itemsPerPage.value + nonCustomerEmployees.length;
+      }
+      
+      currentPage.value = response.data.data.current_page;
+      totalPages.value = Math.max(1, Math.ceil(totalEmployees.value / itemsPerPage.value));
+    } else {
+      throw new Error("Unexpected API response structure");
+    }
+  } catch (err) {
+    console.error("Failed to fetch employees:", err);
+    error.value = "Failed to load employees. Please try again.";
+    employees.value = [];
+    totalPages.value = 1;
+    totalEmployees.value = 0;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const createEmployee = async () => {
+  if (!validateEmployeeForm()) return;
+
+  isSaving.value = true;
+
+  try {
+    const employeeData = {
+      ...currentEmployee.value,
+      password: password.value,
+      password_confirmation: passwordConfirmation.value,
+    };
+
+    await apiService.createUser(employeeData);
+    closeModal();
+    fetchEmployees();
+  } catch (err) {
+    console.error("Failed to create employee:", err);
+    alert("Failed to create employee. Please try again.");
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const updateEmployee = async () => {
+  if (!validateEmployeeForm(true)) return;
+
+  isSaving.value = true;
+
+  try {
+    const employeeData = { ...currentEmployee.value };
+
+    if (password.value) {
+      employeeData.password = password.value;
+      employeeData.password_confirmation = passwordConfirmation.value;
+    }
+
+    await apiService.updateUser(currentEmployee.value.id, employeeData);
+    closeModal();
+    fetchEmployees();
+  } catch (err) {
+    console.error("Failed to update employee:", err);
+    alert("Failed to update employee. Please try again.");
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const deleteEmployee = async () => {
+  isDeleting.value = true;
+
+  try {
+    await apiService.deleteUser(currentEmployee.value.id);
+    closeDeleteModal();
+    fetchEmployees();
+  } catch (err) {
+    console.error("Failed to delete employee:", err);
+    alert("Failed to delete employee. It may be referenced by other records.");
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
+const validateEmployeeForm = (isEdit = false) => {
+  if (!currentEmployee.value.first_name) {
+    alert("First name is required");
+    return false;
+  }
+
+  if (!currentEmployee.value.email) {
+    alert("Email is required");
+    return false;
+  }
   
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    result = result.filter(employee => 
-      employee.first_name.toLowerCase().includes(query) || 
-      employee.last_name.toLowerCase().includes(query) || 
-      employee.email.toLowerCase().includes(query) || 
-      employee.phone.toLowerCase().includes(query)
+  if (currentEmployee.value.phone) {
+    const phoneDigits = currentEmployee.value.phone.replace(/\D/g, '');
+    
+    if (phoneDigits.length < 10 || phoneDigits.length > 13) {
+      alert("Phone number must be between 10 and 13 digits");
+      return false;
+    }
+  }
+
+  if (!isEdit && !password.value) {
+    alert("Password is required for new employees");
+    return false;
+  }
+
+  if (password.value && password.value !== passwordConfirmation.value) {
+    alert("Passwords do not match");
+    return false;
+  }
+
+  return true;
+};
+
+const saveEmployee = () => {
+  if (isEditing.value) {
+    updateEmployee();
+  } else {
+    createEmployee();
+  }
+};
+
+const filteredEmployees = computed(() => {
+  if (isLoading.value) {
+    return [];
+  }
+  
+  let filtered = employees.value;
+  
+  if (roleFilter.value !== "") {
+    filtered = filtered.filter(
+      employee => String(employee.role) === roleFilter.value
     );
   }
   
-  if (roleFilter.value !== "") {
-    result = result.filter(employee => employee.role === parseInt(roleFilter.value));
-  }
-  
-  result.sort((a, b) => {
-    if (sortBy.value === "name") {
-      return (a.first_name + a.last_name).localeCompare(b.first_name + b.last_name);
-    } else if (sortBy.value === "role") {
-      return a.role - b.role;
-    } else if (sortBy.value === "date") {
-      return new Date(b.created_at) - new Date(a.created_at);
-    }
-    return 0;
-  });
-  
-  return result;
+  return filtered;
 });
 
 const paginationStart = computed(() => {
-  return Math.min((currentPage.value - 1) * itemsPerPage.value + 1, filteredEmployees.value.length);
+  if (filteredEmployees.value.length === 0) return 0;
+  return 1 + (currentPage.value - 1) * itemsPerPage.value;
 });
 
 const paginationEnd = computed(() => {
-  return Math.min(currentPage.value * itemsPerPage.value, filteredEmployees.value.length);
-});
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredEmployees.value.length / itemsPerPage.value) || 1;
-});
-
-watchEffect(() => {
-  if (searchQuery.value || roleFilter.value) {
-    currentPage.value = 1;
-  }
+  if (filteredEmployees.value.length === 0) return 0;
+  return paginationStart.value + filteredEmployees.value.length - 1;
 });
 
 const formatDate = (date) => {
-  if (!date) return '';
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+  if (!date) return "";
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   }).format(new Date(date));
 };
 
 const getInitials = (name) => {
-  if (!name) return '';
+  if (!name) return "";
   return name
-    .split(' ')
-    .map(word => word[0])
-    .join('')
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
     .toUpperCase()
     .substring(0, 2);
 };
 
 const getRoleLabel = (role) => {
   switch (parseInt(role)) {
-    case 0: return 'Manager';
-    case 1: return 'Cashier';
-    case 2: return 'Staff';
-    case 3: return 'Customer';
-    default: return 'Unknown';
+    case 0: return "Manager";
+    case 1: return "Cashier";
+    case 2: return "Supplier";
+    case 3: return "Customer";
+    default: return "Unknown";
   }
 };
 
 const getShortAddress = (address) => {
-  if (!address) return '';
-  const firstLine = address.split('\n')[0];
-  return firstLine.length > 30 ? firstLine.substring(0, 30) + '...' : firstLine;
+  if (!address) return "";
+  const firstLine = address.split("\n")[0];
+  return firstLine.length > 30 ? firstLine.substring(0, 30) + "..." : firstLine;
 };
 
 const openCreateModal = () => {
   isEditing.value = false;
   currentEmployee.value = {
     id: null,
-    role: 2,
+    role: 1,
     first_name: "",
     last_name: "",
     email: "",
@@ -927,8 +1183,6 @@ const openCreateModal = () => {
     address: "",
     company_name: "",
     point: 0,
-    created_at: new Date(),
-    updated_at: new Date(),
   };
   password.value = "";
   passwordConfirmation.value = "";
@@ -940,6 +1194,8 @@ const editEmployee = (employee) => {
   currentEmployee.value = { ...employee };
   currentEmployee.value.role = parseInt(currentEmployee.value.role);
   currentEmployee.value.gender = parseInt(currentEmployee.value.gender);
+  password.value = "";
+  passwordConfirmation.value = "";
   isViewModalOpen.value = false;
   isModalOpen.value = true;
 };
@@ -966,35 +1222,42 @@ const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
 };
 
-const saveEmployee = () => {
-  const now = new Date().toISOString();
-  
-  if (isEditing.value) {
-    const index = employees.value.findIndex(e => e.id === currentEmployee.value.id);
-    if (index !== -1) {
-      employees.value[index] = { 
-        ...currentEmployee.value, 
-        updated_at: now 
-      };
-    }
-  } else {
-    const newId = Math.max(...employees.value.map(employee => employee.id), 0) + 1;
-    employees.value.push({
-      ...currentEmployee.value,
-      id: newId,
-      email_verified_at: now,
-      created_at: now,
-      updated_at: now
-    });
+const addApiMethods = () => {
+  if (!apiService.createUser) {
+    apiService.createUser = (userData) => {
+      return apiService.post("/users", userData);
+    };
   }
-  closeModal();
+
+  if (!apiService.updateUser) {
+    apiService.updateUser = (id, userData) => {
+      return apiService.put(`/users/${id}`, userData);
+    };
+  }
+
+  if (!apiService.deleteUser) {
+    apiService.deleteUser = (id) => {
+      return apiService.delete(`/users/${id}`);
+    };
+  }
 };
 
-const deleteEmployee = () => {
-  const index = employees.value.findIndex(e => e.id === currentEmployee.value.id);
-  if (index !== -1) {
-    employees.value.splice(index, 1);
-  }
-  closeDeleteModal();
-};
+watch([searchQuery, roleFilter], () => {
+  currentPage.value = 1;
+  fetchEmployees();
+});
+
+watch([sortBy, sortDirection], () => {
+  fetchEmployees();
+});
+
+watch(currentPage, () => {
+  fetchEmployees();
+});
+
+// Lifecycle hooks
+onMounted(() => {
+  addApiMethods();
+  fetchEmployees();
+});
 </script>

@@ -331,7 +331,7 @@
               to
               <span class="font-medium">{{ paginationEnd }}</span>
               of
-              <span class="font-medium">{{ totalItems }}</span>
+              <span class="font-medium">{{ filteredTotal }}</span>
               results
             </p>
           </div>
@@ -1049,7 +1049,16 @@ const filteredItems = computed(() => {
   if (isLoading.value) {
     return [];
   }
-  return items.value || [];
+  
+  let filtered = items.value || [];
+  
+  if (categoryFilter.value) {
+    filtered = filtered.filter(item => 
+      item.category_id === parseInt(categoryFilter.value)
+    );
+  }
+  
+  return filtered;
 });
 
 const showEmptyState = computed(() => {
@@ -1080,7 +1089,6 @@ const fetchItems = async () => {
       column: column,
       direction: sortDirection.value,
       search: searchQuery.value || undefined,
-      category_id: categoryFilter.value || undefined,
     });
 
     items.value = response.data.data.data;
@@ -1172,21 +1180,43 @@ const totalPages = computed(() => {
 });
 
 const paginationStart = computed(() => {
+  if (filteredItems.value.length === 0) return 0;
+  
+  if (categoryFilter.value) {
+    return 1;
+  }
+  
   return (currentPage.value - 1) * itemsPerPage.value + 1;
 });
 
 const paginationEnd = computed(() => {
+  if (filteredItems.value.length === 0) return 0;
+  
+  if (categoryFilter.value) {
+    return filteredItems.value.length;
+  }
+  
   return Math.min(currentPage.value * itemsPerPage.value, totalItems.value);
 });
 
+const filteredTotal = computed(() => {
+  if (categoryFilter.value) {
+    return filteredItems.value.length;
+  }
+  return totalItems.value;
+});
+
 watch(
-  [searchQuery, categoryFilter],
+  [searchQuery],
   () => {
     currentPage.value = 1;
     fetchItems();
   },
   { immediate: false }
 );
+
+watch(categoryFilter, () => {
+}, { immediate: false });
 
 watch(
   [sortBy, sortDirection],

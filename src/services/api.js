@@ -26,7 +26,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       const isLoginRequest = error.config?.url?.endsWith("/login");
       const errorMessage = error.response.data?.message || "";
-      const isLoginFailure = 
+      const isLoginFailure =
         errorMessage.includes("Invalid credentials") ||
         errorMessage.includes("login") ||
         errorMessage.includes("password");
@@ -74,12 +74,12 @@ export default {
   },
   createItem(itemData) {
     return apiClient.post("/items", itemData, {
-      headers: { "Content-Type": "multipart/form-data" }
+      headers: { "Content-Type": "multipart/form-data" },
     });
   },
   updateItem(id, itemData) {
     return apiClient.post(`/items/${id}?_method=PUT`, itemData, {
-      headers: { "Content-Type": "multipart/form-data" }
+      headers: { "Content-Type": "multipart/form-data" },
     });
   },
   deleteItem(id) {
@@ -125,4 +125,16 @@ export default {
     return apiClient.post("/sales", saleData);
   },
 
+  getUsers(params = {}) {
+    return apiClient.get("/users", { params });
+  },
+  createUser(userData) {
+    return apiClient.post("/users", userData);
+  },
+  updateUser(id, userData) {
+    return apiClient.put(`/users/${id}`, userData);
+  },
+  deleteUser(id) {
+    return apiClient.delete(`/users/${id}`);
+  },
 };
