@@ -572,7 +572,6 @@
                           v-model="currentItem.sell_price"
                           type="number"
                           min="0"
-                          step="1000"
                           class="pl-8 pr-3 py-2 focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white"
                           placeholder="0"
                         />

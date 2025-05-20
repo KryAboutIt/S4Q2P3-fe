@@ -1016,7 +1016,6 @@
                     type="number"
                     v-model.number="amountPaid"
                     min="0"
-                    step="1000"
                     class="pl-7 pr-4 py-2 block w-full border border-gray-300 dark:border-gray-600 rounded-md focus:ring-primary dark:focus:ring-dark-primary focus:border-primary dark:focus:border-dark-primary bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>

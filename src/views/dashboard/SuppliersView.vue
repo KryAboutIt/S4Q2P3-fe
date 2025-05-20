@@ -486,7 +486,6 @@
       </div>
     </div>
 
-    <!-- View Modal -->
     <div
       v-if="isViewModalOpen"
       class="fixed inset-0 z-10 overflow-y-auto"
@@ -638,7 +637,6 @@
       </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div
       v-if="isDeleteModalOpen"
       class="fixed inset-0 z-10 overflow-y-auto"
