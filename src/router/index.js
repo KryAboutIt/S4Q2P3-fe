@@ -4,6 +4,11 @@ import DashboardLayout from "../layouts/DashboardLayout.vue";
 
 const routes = [
   {
+    path: "/",
+    name: "home",
+    redirect: "/dashboard",
+  },
+  {
     path: "/login",
     name: "login",
     component: LoginView,
@@ -55,6 +60,12 @@ const routes = [
         name: 'customer-management',
         component: () => import('../views/dashboard/CustomersView.vue'),
         meta: { title: 'Customer Management' }
+      },
+      {
+        path: 'logistics',
+        name: 'logistics-management',
+        component: () => import('../views/dashboard/LogisticsView.vue'),
+        meta: { title: 'Logistics Management' }
       }
       // {
       //   path: 'profile',

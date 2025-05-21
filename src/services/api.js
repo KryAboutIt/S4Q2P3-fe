@@ -137,4 +137,20 @@ export default {
   deleteUser(id) {
     return apiClient.delete(`/users/${id}`);
   },
+
+  getLogistics(params = {}) {
+    return apiClient.get("/logistics", { params });
+  },
+  getLogistic(id) {
+    return apiClient.get(`/logistics/${id}`);
+  },
+  createLogistic(logisticData) {
+    return apiClient.post("/logistics", logisticData);
+  },
+  updateLogistic(id, logisticData) {
+    return apiClient.put(`/logistics/${id}`, logisticData);
+  },
+  deleteLogistic(id) {
+    return apiClient.delete(`/logistics/${id}`);
+  },
 };
