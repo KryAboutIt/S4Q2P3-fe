@@ -12,7 +12,28 @@
         <p class="text-gray-600 dark:text-gray-400">Sign in to your account</p>
       </div>
 
-      <form class="space-y-6">
+      <div
+        v-if="error"
+        class="mb-6 flex items-center p-4 border-l-4 border-red-500 dark:border-red-400 bg-red-50 dark:bg-gray-700/50 rounded-md"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 text-red-500 dark:text-red-400 mr-3 flex-shrink-0"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1 9a1 1 0 100-2 1 1 0 000 2z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <div class="text-sm text-gray-700 dark:text-gray-200">
+          {{ error }}
+        </div>
+      </div>
+
+      <form @submit.prevent="login" class="space-y-6">
         <div class="space-y-1">
           <label
             for="email"
@@ -21,10 +42,12 @@
           >
           <input
             id="email"
+            v-model="email"
             type="email"
             placeholder="Enter your email"
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             autofocus
+            required
           />
         </div>
 
@@ -36,9 +59,11 @@
           >
           <input
             id="password"
+            v-model="password"
             type="password"
             placeholder="Enter your password"
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            required
           />
         </div>
 
@@ -81,7 +106,11 @@
         <div class="flex items-center justify-between">
           <label class="flex items-center">
             <div class="relative flex items-center">
-              <input type="checkbox" class="sr-only peer" />
+              <input
+                type="checkbox"
+                v-model="rememberMe"
+                class="sr-only peer"
+              />
               <div
                 class="w-5 h-5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 peer-checked:bg-primary dark:peer-checked:bg-dark-primary peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary dark:peer-focus:ring-dark-primary peer-focus:border-transparent dark:peer-focus:border-transparent transition-colors duration-200"
               ></div>
@@ -119,9 +148,33 @@
 
         <button
           type="submit"
-          class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+          class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover dark:bg-dark-primary dark:hover:bg-dark-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50"
+          :disabled="isLoading"
         >
-          Sign In
+          <span v-if="isLoading">
+            <svg
+              class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            Signing In...
+          </span>
+          <span v-else>Sign In</span>
         </button>
       </form>
 
@@ -162,8 +215,53 @@
 
 <script setup>
 import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import apiService from "../services/api";
 
+const router = useRouter();
+
+const email = ref("");
+const password = ref("");
 const isManager = ref(0);
+const rememberMe = ref(false);
+
+const isLoading = ref(false);
+const error = ref("");
+
+const login = async () => {
+  error.value = "";
+  isLoading.value = true;
+
+  try {
+    const response = await apiService.login({
+      email: email.value,
+      password: password.value,
+      is_manager: isManager.value,
+    });
+
+    localStorage.setItem("token", response.data.data.token);
+    localStorage.setItem("user", JSON.stringify(response.data.data.user));
+
+    const role = response.data.data.user.role;
+    if (role === 0) {
+      router.push("/dashboard");
+    } else if (role === 1) {
+      router.push("/dashboard/sales");
+    } else {
+      router.push("/dashboard");
+    }
+  } catch (err) {
+    console.error("Login failed:", err);
+
+    if (err.response && err.response.data) {
+      error.value = err.response.data.message || "Invalid login credentials";
+    } else {
+      error.value = "Unable to connect to the server. Please try again later.";
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 onMounted(() => {
   if (
