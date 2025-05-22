@@ -1,7 +1,7 @@
 <template>
   <div>
-    <CashierDashboard v-if="userRole == 1" />
-    <ManagerDashboard v-else-if="userRole == 0" />
+    <CashierDashboard v-if="userRole == 0" />
+    <ManagerDashboard v-else-if="userRole == 1" />
     <div v-else class="text-center py-12">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
